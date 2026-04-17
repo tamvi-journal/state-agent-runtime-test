@@ -39,6 +39,14 @@ def run() -> None:
     ).to_dict()
     assert second["live_state"]["continuity_anchor"] == "family-scaffold"
 
+    normalized = handoff_builder.normalize_handoff(
+        {
+            **handoff,
+            "unknown_extra": "ignored",
+        }
+    ).to_dict()
+    assert normalized["continuity_anchor"] == "family-scaffold"
+
     disagreement_first = pipeline.run(
         FamilyTurnInput(
             current_message="Both routes still seem plausible, so keep the disagreement open.",

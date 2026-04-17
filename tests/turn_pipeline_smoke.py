@@ -76,6 +76,30 @@ def run() -> None:
     assert disagreement["router_decision"]["epistemic_resolution_claimed"] is False
     assert disagreement["execution_decision"]["decision"] == "require_approval"
 
+    carried = pipeline.run(
+        FamilyTurnInput(
+            current_message="Continue carefully from the baton while keeping plurality visible.",
+            active_project="",
+            current_task="continue scaffold from baton",
+            recent_anchor_cue="",
+            verification_status="",
+            action_required=False,
+            current_environment_state="carryover without event reconstruction",
+            previous_handoff={
+                "active_project": "family-scaffold",
+                "active_mode": "build",
+                "continuity_anchor": "family-scaffold",
+                "verification_status": "pending",
+                "shared_disagreement_status": "open:action:meaningful",
+                "current_axis": "continue scaffold from baton",
+                "compression_summary": {"active_question": "continue scaffold from baton"},
+                "open_obligations": ["keep the pipeline canary narrow"],
+            },
+        )
+    ).to_dict()
+    assert carried["context_view"]["shared_disagreement_status"] == "open:action:meaningful"
+    assert "open_disagreement" in carried["live_state"]["tension_flags"]
+
     verification = pipeline.run(
         FamilyTurnInput(
             current_message="Verify the correctness of the family scaffold and review the risky parts.",

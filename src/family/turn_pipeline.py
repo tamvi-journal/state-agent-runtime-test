@@ -19,6 +19,7 @@ from family.monitor_layer import MonitorLayer
 from family.reactivation_layer import ReactivationLayer
 from family.router_decision import FamilyRouterDecision
 from family.router_types import RouterInput
+from family.turn_handoff_adapter import handoff_seeded_live_state, normalize_previous_handoff
 from family.turn_pipeline_types import FamilyTurnInput, FamilyTurnResult
 
 
@@ -40,155 +41,107 @@ class FamilyTurnPipeline:
         if isinstance(turn_input, dict):
             turn_input = FamilyTurnInput(**turn_input)
 
-        previous_handoff = dict(turn_input.previous_handoff)
-        seeded_anchor = turn_input.recent_anchor_cue or str(previous_handoff.get("continuity_anchor", ""))
-        seeded_project = turn_input.active_project or str(previous_handoff.get("active_project", ""))
-        seeded_verification = turn_input.verification_status or str(previous_handoff.get("verification_status", ""))
+        normalized_handoff = normalize_previous_handoff(turn_input.previous_handoff)
+        previous_handoff = normalized_handoff.handoff
+
+        seeded_project = turn_input.active_project or previous_handoff.active_project
+        seeded_anchor = turn_input.recent_anchor_cue or previous_handoff.continuity_anchor
+        seeded_verification = turn_input.verification_status or previous_handoff.verification_status
         seeded_obligations = (
             list(turn_input.open_obligations)
             if turn_input.open_obligations
-            else list(previous_handoff.get("open_obligations", []))
+            else list(previous_handoff.open_obligations)
         )
         disagreement_events = list(turn_input.disagreement_events)
-        if not disagreement_events:
-            carried = self._handoff_disagreement_event(previous_handoff)
-            if carried is not None:
-                disagreement_events = [carried]
-
         disagreement_event = self._primary_disagreement_event(disagreement_events)
-        disagreement_open = bool(disagreement_event and disagreement_event.still_open)
+        disagreement_open = bool(disagreement_event and disagreement_event.still_open) or normalized_handoff.disagreement_open
 
-        context_view = self.context_builder.build(
-            {
-                "active_project": seeded_project,
-                "active_mode": str(previous_handoff.get("active_mode", "")),
-                "current_task": turn_input.current_task,
-                "current_environment_state": turn_input.current_environment_state or "dry family turn pipeline",
-                "last_verified_result": turn_input.last_verified_result,
-                "open_obligations": seeded_obligations,
-                "verification_status": seeded_verification,
-                "disagreement_events": disagreement_events,
-                "risk_hint": turn_input.monitor_hint,
-                "monitor_summary": None,
-                "recent_anchor_cue": seeded_anchor,
-            }
-        ).to_dict()
-
-        mode_result = self.mode_inference.infer(
-            {
-                "current_message": turn_input.current_message,
-                "active_project": seeded_project,
-                "current_task": turn_input.current_task,
-                "recent_anchor_cue": seeded_anchor,
-                "context_view_summary": self._context_summary(context_view),
-                "action_required": turn_input.action_required,
-                "disagreement_open": disagreement_open,
-                "verification_status": seeded_verification,
-                "explicit_mode_hint": turn_input.explicit_mode_hint or str(previous_handoff.get("active_mode", "")),
-            }
-        ).to_dict()
-
-        monitor_output = self.monitor_layer.pre_action_monitor(
-            active_mode=mode_result["active_mode"],
-            task_type=self._task_type(turn_input.current_message, turn_input.current_task),
-            context_view={
-                "task_focus": context_view["task_focus"],
-                "current_execution_boundary": turn_input.execution_intent or turn_input.current_task,
-            },
-            draft_response=turn_input.current_message,
-            archive_status={
-                "archive_consulted": turn_input.archive_consulted,
-                "fragments_used": 1 if turn_input.archive_consulted else 0,
-            },
-            project_relevance_markers={
-                "project_relevant": self._project_relevant(turn_input.current_message, turn_input.active_project),
-            },
-        ).to_dict()
-
+        context_view = self._build_context_view(
+            turn_input,
+            seeded_project=seeded_project,
+            seeded_anchor=seeded_anchor,
+            seeded_verification=seeded_verification,
+            seeded_obligations=seeded_obligations,
+            previous_handoff=previous_handoff,
+            disagreement_events=disagreement_events,
+            disagreement_open=disagreement_open,
+        )
+        mode_result = self._build_mode_result(
+            turn_input,
+            context_view=context_view,
+            seeded_project=seeded_project,
+            seeded_anchor=seeded_anchor,
+            seeded_verification=seeded_verification,
+            previous_handoff=previous_handoff,
+            disagreement_open=disagreement_open,
+        )
+        live_state = self._build_live_state(
+            context_view=context_view,
+            mode_result=mode_result,
+            seeded_project=seeded_project,
+            seeded_anchor=seeded_anchor,
+            seeded_verification=seeded_verification,
+            current_axis_hint=previous_handoff.current_axis,
+            disagreement_open=disagreement_open,
+            monitor_summary=None,
+        )
+        monitor_output = self._build_monitor_output(
+            turn_input,
+            context_view=context_view,
+            live_state=live_state,
+            mode_result=mode_result,
+        )
         mirror_summary = self.mirror_bridge.build_mirror_summary(
             monitor_output=monitor_output,
             active_mode=mode_result["active_mode"],
             task_type=self._task_type(turn_input.current_message, turn_input.current_task),
             phase="pre_action",
         ).to_dict()
+        live_state = self._build_live_state(
+            context_view=context_view,
+            mode_result=mode_result,
+            seeded_project=seeded_project,
+            seeded_anchor=seeded_anchor,
+            seeded_verification=seeded_verification,
+            current_axis_hint=previous_handoff.current_axis,
+            disagreement_open=disagreement_open,
+            monitor_summary=mirror_summary,
+        )
 
-        live_state = self.live_state_builder.build(
-            {
-                "context_view": context_view,
-                "mode_inference_result": mode_result,
-                "verification_status": seeded_verification,
-                "active_project": seeded_project,
-                "recent_anchor_cue": seeded_anchor,
-                "disagreement_open": disagreement_open,
-                "monitor_summary": mirror_summary,
-                "current_axis_hint": str(previous_handoff.get("current_axis", "")),
-            }
-        ).to_dict()
-
-        effort_route = self.effort_allocator.route(
-            EffortInput(
-                task_type=self._task_type(turn_input.current_message, turn_input.current_task),
-                domain=self._domain(seeded_project, mode_result["active_mode"]),
-                active_mode=mode_result["active_mode"],
-                mode_confidence=float(mode_result["confidence"]),
-                ambiguity_score=self._ambiguity_score(turn_input.current_message, disagreement_open, mirror_summary),
-                risk_score=self._risk_score(seeded_verification, disagreement_open, mirror_summary),
-                stakes_signal=None,
-                stakes_confidence=0.0,
-                action_required=turn_input.action_required,
-                memory_commit_possible=False,
-                disagreement_likelihood=0.75 if disagreement_open else 0.10,
-                cue_strength=self._cue_strength(turn_input.current_message, seeded_anchor, seeded_project),
-                verification_gap_estimate=0.75 if seeded_verification.lower() in {"pending", "failed", "unknown"} else 0.10,
-                high_risk_domain=False,
-                unanswerable_likelihood=0.65 if "not sure" in turn_input.current_message.lower() else 0.10,
-            )
-        ).to_dict()
-
+        effort_input = self._build_effort_input(
+            turn_input,
+            mode_result=mode_result,
+            seeded_project=seeded_project,
+            seeded_anchor=seeded_anchor,
+            seeded_verification=seeded_verification,
+            disagreement_open=disagreement_open,
+            mirror_summary=mirror_summary,
+        )
+        effort_route_obj = self.effort_allocator.route(effort_input)
+        effort_route = effort_route_obj.to_dict()
         router_decision = self.router.decide(
             RouterInput(
-                task_type=self._task_type(turn_input.current_message, turn_input.current_task),
-                effort_route=self.effort_allocator.route(
-                    EffortInput(
-                        task_type=self._task_type(turn_input.current_message, turn_input.current_task),
-                        domain=self._domain(seeded_project, mode_result["active_mode"]),
-                        active_mode=mode_result["active_mode"],
-                        mode_confidence=float(mode_result["confidence"]),
-                        ambiguity_score=self._ambiguity_score(turn_input.current_message, disagreement_open, mirror_summary),
-                        risk_score=self._risk_score(seeded_verification, disagreement_open, mirror_summary),
-                        stakes_signal=None,
-                        stakes_confidence=0.0,
-                        action_required=turn_input.action_required,
-                        memory_commit_possible=False,
-                        disagreement_likelihood=0.75 if disagreement_open else 0.10,
-                        cue_strength=self._cue_strength(turn_input.current_message, seeded_anchor, seeded_project),
-                        verification_gap_estimate=0.75 if seeded_verification.lower() in {"pending", "failed", "unknown"} else 0.10,
-                        high_risk_domain=False,
-                        unanswerable_likelihood=0.65 if "not sure" in turn_input.current_message.lower() else 0.10,
-                    )
-                ),
+                task_type=effort_input.task_type,
+                effort_route=effort_route_obj,
                 disagreement_event=disagreement_event,
                 mirror_summary=self.mirror_bridge.build_mirror_summary(
                     monitor_output=monitor_output,
                     active_mode=mode_result["active_mode"],
-                    task_type=self._task_type(turn_input.current_message, turn_input.current_task),
+                    task_type=effort_input.task_type,
                     phase="pre_action",
                 ),
                 verification_status=seeded_verification,
                 active_mode=mode_result["active_mode"],
-                domain=self._domain(seeded_project, mode_result["active_mode"]),
+                domain=effort_input.domain,
                 action_required=turn_input.action_required,
             )
         ).to_dict()
 
-        execution_request = {}
-        execution_decision = {}
-        approval_request = {}
+        execution_request: dict[str, Any] = {}
+        execution_decision: dict[str, Any] = {}
+        approval_request: dict[str, Any] = {}
         if turn_input.action_required:
-            execution_request_obj = self._build_execution_request(
-                turn_input,
-                active_project=seeded_project,
-            )
+            execution_request_obj = self._build_execution_request(turn_input, active_project=seeded_project)
             execution_request = execution_request_obj.to_dict()
             execution_decision_obj = self.execution_gate.assess(execution_request_obj)
             execution_decision = execution_decision_obj.to_dict()
@@ -203,12 +156,11 @@ class FamilyTurnPipeline:
             execution_decision=execution_decision,
             seeded_verification=seeded_verification,
         )
-
         previous_live_state = (
             dict(turn_input.previous_live_state)
             if turn_input.previous_live_state
-            else self._live_state_from_handoff(previous_handoff)
-            if previous_handoff
+            else handoff_seeded_live_state(previous_handoff)
+            if any(previous_handoff.to_dict().values())
             else self._default_previous_live_state(turn_input, context_view, mode_result)
         )
         delta_log_event = self.delta_builder.build(
@@ -221,7 +173,6 @@ class FamilyTurnPipeline:
                 "verification_after": live_state["verification_status"],
             }
         ).to_dict()
-
         compression_summary = self.compression_layer.build(
             {
                 "context_view": context_view,
@@ -230,11 +181,10 @@ class FamilyTurnPipeline:
                 "recent_anchor_cue": seeded_anchor,
                 "verification_status": seeded_verification,
                 "disagreement_open": disagreement_open,
-                "current_question": str(previous_handoff.get("compression_summary", {}).get("active_question", "")),
+                "current_question": str(previous_handoff.compression_summary.get("active_question", "")),
                 "task_focus": turn_input.current_task,
             }
         ).to_dict()
-
         reactivation_result = self.reactivation_layer.build(
             {
                 "current_message": turn_input.current_message,
@@ -246,31 +196,9 @@ class FamilyTurnPipeline:
                 "recent_anchor_cue": seeded_anchor,
                 "disagreement_open": disagreement_open,
                 "verification_status": seeded_verification,
-                "mode_hint": turn_input.explicit_mode_hint or str(previous_handoff.get("active_mode", "")) or mode_result["active_mode"],
+                "mode_hint": turn_input.explicit_mode_hint or previous_handoff.active_mode or mode_result["active_mode"],
             }
         ).to_dict()
-
-        notes = [
-            "dry pipeline canary composed family-layer stages without real execution",
-        ]
-        if execution_decision:
-            notes.append(
-                f"execution gate result: {execution_decision['decision']} ({execution_decision['recommended_zone']})"
-            )
-            if execution_decision["decision"] == "require_approval":
-                notes.append("runtime action remained approval-gated and was not executed")
-            elif execution_decision["decision"] == "deny":
-                notes.append("runtime action was denied, so verification remained non-passing")
-            else:
-                notes.append("execution posture was allowed in principle, but this dry canary still executed nothing")
-        else:
-            notes.append("no runtime action was requested, so execution objects remained empty")
-        if disagreement_open:
-            notes.append("open disagreement remained visible across context, live state, router, and compression")
-        if seeded_verification.lower() in {"pending", "failed", "unknown"}:
-            notes.append("verification posture remained visible and was not auto-passed")
-        if previous_handoff:
-            notes.append("previous handoff supplied compact continuity baton for this turn")
 
         return FamilyTurnResult(
             context_view=context_view,
@@ -287,8 +215,185 @@ class FamilyTurnPipeline:
             delta_log_event=delta_log_event,
             compression_summary=compression_summary,
             reactivation_result=reactivation_result,
-            notes=notes,
+            notes=self._build_notes(
+                execution_decision=execution_decision,
+                seeded_verification=seeded_verification,
+                disagreement_open=disagreement_open,
+                normalized_handoff=normalized_handoff,
+                disagreement_event=disagreement_event,
+            ),
         )
+
+    def _build_context_view(
+        self,
+        turn_input: FamilyTurnInput,
+        *,
+        seeded_project: str,
+        seeded_anchor: str,
+        seeded_verification: str,
+        seeded_obligations: list[str],
+        previous_handoff,
+        disagreement_events: list[dict[str, Any]],
+        disagreement_open: bool,
+    ) -> dict[str, Any]:
+        context_view = self.context_builder.build(
+            {
+                "active_project": seeded_project,
+                "active_mode": previous_handoff.active_mode,
+                "current_task": turn_input.current_task,
+                "current_environment_state": turn_input.current_environment_state or "dry family turn pipeline",
+                "last_verified_result": turn_input.last_verified_result,
+                "open_obligations": seeded_obligations,
+                "verification_status": seeded_verification,
+                "disagreement_events": disagreement_events,
+                "risk_hint": turn_input.monitor_hint,
+                "monitor_summary": None,
+                "recent_anchor_cue": seeded_anchor,
+            }
+        ).to_dict()
+        if disagreement_open and not disagreement_events and previous_handoff.shared_disagreement_status != "none":
+            context_view["shared_disagreement_status"] = previous_handoff.shared_disagreement_status
+            notes = list(context_view.get("notes", []))
+            notes.append("shared disagreement posture carried forward from previous handoff")
+            context_view["notes"] = notes
+        return context_view
+
+    def _build_mode_result(
+        self,
+        turn_input: FamilyTurnInput,
+        *,
+        context_view: dict[str, Any],
+        seeded_project: str,
+        seeded_anchor: str,
+        seeded_verification: str,
+        previous_handoff,
+        disagreement_open: bool,
+    ) -> dict[str, Any]:
+        return self.mode_inference.infer(
+            {
+                "current_message": turn_input.current_message,
+                "active_project": seeded_project,
+                "current_task": turn_input.current_task,
+                "recent_anchor_cue": seeded_anchor,
+                "context_view_summary": self._context_summary(context_view),
+                "action_required": turn_input.action_required,
+                "disagreement_open": disagreement_open,
+                "verification_status": seeded_verification,
+                "explicit_mode_hint": turn_input.explicit_mode_hint or previous_handoff.active_mode,
+            }
+        ).to_dict()
+
+    def _build_live_state(
+        self,
+        *,
+        context_view: dict[str, Any],
+        mode_result: dict[str, Any],
+        seeded_project: str,
+        seeded_anchor: str,
+        seeded_verification: str,
+        current_axis_hint: str,
+        disagreement_open: bool,
+        monitor_summary: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        return self.live_state_builder.build(
+            {
+                "context_view": context_view,
+                "mode_inference_result": mode_result,
+                "verification_status": seeded_verification,
+                "active_project": seeded_project,
+                "recent_anchor_cue": seeded_anchor,
+                "disagreement_open": disagreement_open,
+                "monitor_summary": monitor_summary,
+                "current_axis_hint": current_axis_hint,
+            }
+        ).to_dict()
+
+    def _build_monitor_output(
+        self,
+        turn_input: FamilyTurnInput,
+        *,
+        context_view: dict[str, Any],
+        live_state: dict[str, Any],
+        mode_result: dict[str, Any],
+    ) -> dict[str, Any]:
+        return self.monitor_layer.pre_action_monitor(
+            active_mode=mode_result["active_mode"],
+            task_type=self._task_type(turn_input.current_message, turn_input.current_task),
+            context_view={
+                "task_focus": context_view["task_focus"],
+                "current_execution_boundary": turn_input.execution_intent or turn_input.current_task,
+                "continuity_anchor": live_state["continuity_anchor"],
+            },
+            draft_response=turn_input.current_message,
+            archive_status={
+                "archive_consulted": turn_input.archive_consulted,
+                "fragments_used": 1 if turn_input.archive_consulted else 0,
+            },
+            project_relevance_markers={
+                "project_relevant": self._project_relevant(turn_input.current_message, turn_input.active_project),
+            },
+        ).to_dict()
+
+    def _build_effort_input(
+        self,
+        turn_input: FamilyTurnInput,
+        *,
+        mode_result: dict[str, Any],
+        seeded_project: str,
+        seeded_anchor: str,
+        seeded_verification: str,
+        disagreement_open: bool,
+        mirror_summary: dict[str, Any],
+    ) -> EffortInput:
+        return EffortInput(
+            task_type=self._task_type(turn_input.current_message, turn_input.current_task),
+            domain=self._domain(seeded_project, mode_result["active_mode"]),
+            active_mode=mode_result["active_mode"],
+            mode_confidence=float(mode_result["confidence"]),
+            ambiguity_score=self._ambiguity_score(turn_input.current_message, disagreement_open, mirror_summary),
+            risk_score=self._risk_score(seeded_verification, disagreement_open, mirror_summary),
+            stakes_signal=None,
+            stakes_confidence=0.0,
+            action_required=turn_input.action_required,
+            memory_commit_possible=False,
+            disagreement_likelihood=0.75 if disagreement_open else 0.10,
+            cue_strength=self._cue_strength(turn_input.current_message, seeded_anchor, seeded_project),
+            verification_gap_estimate=0.75 if seeded_verification.lower() in {"pending", "failed", "unknown"} else 0.10,
+            high_risk_domain=False,
+            unanswerable_likelihood=0.65 if "not sure" in turn_input.current_message.lower() else 0.10,
+        )
+
+    @staticmethod
+    def _build_notes(
+        *,
+        execution_decision: dict[str, Any],
+        seeded_verification: str,
+        disagreement_open: bool,
+        normalized_handoff,
+        disagreement_event: DisagreementEvent | None,
+    ) -> list[str]:
+        notes = ["dry pipeline canary composed family-layer stages without real execution"]
+        if execution_decision:
+            notes.append(
+                f"execution gate result: {execution_decision['decision']} ({execution_decision['recommended_zone']})"
+            )
+            if execution_decision["decision"] == "require_approval":
+                notes.append("runtime action remained approval-gated and was not executed")
+            elif execution_decision["decision"] == "deny":
+                notes.append("runtime action was denied, so verification remained non-passing")
+            else:
+                notes.append("execution posture was allowed in principle, but this dry canary still executed nothing")
+        else:
+            notes.append("no runtime action was requested, so execution objects remained empty")
+        if disagreement_open:
+            notes.append("open disagreement remained visible across context, live state, router, and compression")
+        if seeded_verification.lower() in {"pending", "failed", "unknown"}:
+            notes.append("verification posture remained visible and was not auto-passed")
+        if any(normalized_handoff.handoff.to_dict().values()):
+            notes.append("previous handoff supplied compact continuity baton for this turn")
+            if normalized_handoff.disagreement_open and disagreement_event is None:
+                notes.append("handoff carried open disagreement status without reconstructing a synthetic event")
+        return notes
 
     @staticmethod
     def _context_summary(context_view: dict[str, Any]) -> str:
@@ -491,51 +596,6 @@ class FamilyTurnPipeline:
             "user_signal": context_view["task_focus"],
             "archive_needed": False,
             "verification_status": "passed" if turn_input.last_verified_result and not turn_input.verification_status else turn_input.verification_status,
-        }
-
-    @staticmethod
-    def _live_state_from_handoff(previous_handoff: dict[str, Any]) -> dict[str, Any]:
-        if not previous_handoff:
-            return {}
-        disagreement_open = str(previous_handoff.get("shared_disagreement_status", "none")).startswith("open:")
-        verification_status = str(previous_handoff.get("verification_status", ""))
-        tension_flags: list[str] = []
-        if disagreement_open:
-            tension_flags.append("open_disagreement")
-        if verification_status.lower() in {"pending", "failed", "unknown"}:
-            tension_flags.append("verification_unsettled")
-        return {
-            "active_mode": str(previous_handoff.get("active_mode", "")),
-            "current_axis": str(previous_handoff.get("current_axis", "")),
-            "coherence_level": "strained" if tension_flags else "stable",
-            "tension_flags": tension_flags,
-            "policy_pressure": "low",
-            "active_project": str(previous_handoff.get("active_project", "")),
-            "continuity_anchor": str(previous_handoff.get("continuity_anchor", "")),
-            "user_signal": str(previous_handoff.get("compression_summary", {}).get("active_question", "")),
-            "archive_needed": False,
-            "verification_status": verification_status,
-        }
-
-    @staticmethod
-    def _handoff_disagreement_event(previous_handoff: dict[str, Any]) -> dict[str, Any] | None:
-        status = str(previous_handoff.get("shared_disagreement_status", "none"))
-        if not status.startswith("open:"):
-            return None
-        parts = status.split(":")
-        disagreement_type = parts[1] if len(parts) > 1 else "action"
-        severity = 0.82 if "meaningful" in status else 0.55
-        return {
-            "event_id": "dg_handoff",
-            "timestamp": "2026-04-17T00:00:00Z",
-            "disagreement_type": disagreement_type,
-            "tracey_position": "carry forward continuity-sensitive line",
-            "seyn_position": "carry forward verification-sensitive line",
-            "severity": severity,
-            "still_open": True,
-            "later_resolution": "",
-            "house_law_implicated": "handoff_preserves_open_disagreement_compactly",
-            "epistemic_resolution_claimed": False,
         }
 
     @staticmethod

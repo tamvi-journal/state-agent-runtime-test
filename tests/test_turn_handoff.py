@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from family.turn_handoff import TurnHandoffBuilder
+from family.turn_handoff_types import TurnHandoff
 from family.turn_pipeline import FamilyTurnPipeline
 from family.turn_pipeline_types import FamilyTurnInput
 
@@ -140,6 +141,27 @@ def test_output_remains_compact_and_inspectable() -> None:
 
     assert "history" not in second
     assert "archive_replay" not in second
+
+
+def test_loose_previous_handoff_dict_is_normalized_to_compact_supported_shape() -> None:
+    normalized = TurnHandoffBuilder.normalize_handoff(
+        {
+            "active_project": "family-scaffold",
+            "active_mode": "build",
+            "continuity_anchor": "family-scaffold",
+            "verification_status": "pending",
+            "shared_disagreement_status": "open:action:meaningful",
+            "current_axis": "continue scaffold from baton",
+            "compression_summary": {"active_question": "continue scaffold from baton"},
+            "open_obligations": ["keep handoff compact"],
+            "unknown_extra": {"ignored": True},
+        }
+    )
+
+    assert isinstance(normalized, TurnHandoff)
+    assert normalized.active_project == "family-scaffold"
+    assert normalized.shared_disagreement_status == "open:action:meaningful"
+    assert "unknown_extra" not in normalized.to_dict()
 
 
 def test_no_archive_sleep_or_persistence_is_introduced() -> None:

@@ -113,6 +113,32 @@ def test_unresolved_disagreement_turn_keeps_disagreement_visible_and_does_not_fa
     assert result["router_decision"]["epistemic_resolution_claimed"] is False
 
 
+def test_handoff_carried_disagreement_stays_visible_without_synthetic_event_reconstruction() -> None:
+    pipeline = FamilyTurnPipeline()
+    result = pipeline.run(
+        _input(
+            current_message="Continue carefully from the baton while keeping plurality visible.",
+            disagreement_events=[],
+            previous_handoff={
+                "active_project": "family-scaffold",
+                "active_mode": "build",
+                "continuity_anchor": "family-scaffold",
+                "verification_status": "pending",
+                "shared_disagreement_status": "open:action:meaningful",
+                "current_axis": "continue scaffold from baton",
+                "compression_summary": {"active_question": "continue scaffold from baton"},
+                "open_obligations": ["keep the pipeline canary narrow"],
+                "extra_field": "ignore me",
+            },
+        )
+    ).to_dict()
+
+    assert result["context_view"]["shared_disagreement_status"] == "open:action:meaningful"
+    assert "open_disagreement" in result["live_state"]["tension_flags"]
+    assert "synthetic event" in " ".join(result["notes"])
+    assert result["router_decision"]["epistemic_resolution_claimed"] is False
+
+
 def test_router_lead_can_exist_even_when_execution_gate_blocks_permission() -> None:
     pipeline = FamilyTurnPipeline()
     result = pipeline.run(
@@ -195,6 +221,30 @@ def test_outputs_remain_compact_and_not_transcript_like() -> None:
     }
     assert "transcript" not in result
     assert "history" not in result
+
+
+def test_previous_handoff_still_improves_delta_without_large_synthetic_baseline() -> None:
+    pipeline = FamilyTurnPipeline()
+    result = pipeline.run(
+        _input(
+            current_message="Review and verify the family scaffold now.",
+            current_task="verify the family scaffold",
+            verification_status="pending",
+            recent_anchor_cue="",
+            previous_handoff={
+                "active_project": "family-scaffold",
+                "active_mode": "build",
+                "continuity_anchor": "family-scaffold",
+                "verification_status": "passed",
+                "shared_disagreement_status": "none",
+                "current_axis": "continue the family scaffold build",
+                "compression_summary": {"active_question": "continue the family scaffold build"},
+                "open_obligations": ["keep the pipeline canary narrow"],
+            },
+        )
+    ).to_dict()
+
+    assert result["delta_log_event"]["mode_shift"] == "build->audit"
 
 
 def test_no_sleep_logic_is_introduced() -> None:

@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from family.turn_handoff_adapter import normalize_previous_handoff
 from family.turn_handoff_types import TurnHandoff
 from family.turn_pipeline_types import FamilyTurnResult
 
@@ -40,3 +41,7 @@ class TurnHandoffBuilder:
         if isinstance(handoff, dict):
             handoff = TurnHandoff(**handoff)
         return handoff.to_dict()
+
+    @staticmethod
+    def normalize_handoff(handoff: TurnHandoff | dict[str, Any] | None) -> TurnHandoff:
+        return normalize_previous_handoff(handoff).handoff
