@@ -28,6 +28,10 @@ def run() -> None:
             requested_zone="host",
             writes_state=True,
             source_trust_stage="reviewed",
+            requested_operation="mutate_repo",
+            target_scope="repo_local",
+            mutation_depth="host_mutation",
+            zone_preference="host",
             reason="proposed repository mutation",
         )
     )
@@ -41,6 +45,10 @@ def run() -> None:
             requested_zone="host",
             package_install_required=True,
             source_trust_stage="unknown",
+            requested_operation="install_dependency",
+            target_scope="unknown",
+            mutation_depth="none",
+            zone_preference="host",
             reason="dependency install",
         )
     )
@@ -48,15 +56,37 @@ def run() -> None:
 
     sandbox = gate.assess(
         ExecutionRequest(
-            action_type="inspect",
+            action_type="parse_payload",
             target_type="structured_payload",
             target_path_or_ref="generated_output.json",
             requested_zone="sandbox",
             source_trust_stage="unknown",
+            requested_operation="parse_in_sandbox",
+            target_scope="temp_artifact",
+            mutation_depth="none",
+            zone_preference="sandbox",
+            why_not_host_if_applicable="sandbox contains deeper parsing without granting host execution or mutation",
             reason="controlled parsing of generated payload",
         )
     )
     assert sandbox.recommended_zone == "sandbox"
+
+    blocked = gate.assess(
+        ExecutionRequest(
+            action_type="network_access",
+            target_type="remote_ref",
+            target_path_or_ref="https://untrusted.example/api",
+            requested_zone="host",
+            network_required=True,
+            source_trust_stage="untrusted",
+            requested_operation="access_network",
+            target_scope="external_destination",
+            mutation_depth="none",
+            zone_preference="host",
+            reason="fetch remote content",
+        )
+    )
+    assert blocked.decision in {"require_approval", "deny"}
 
     print("execution_gate_smoke: ok")
 

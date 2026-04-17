@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Any
 
+from family.observation_types import ObservedOutcome
+
 
 @dataclass(slots=True)
 class FamilyTurnInput:
@@ -21,6 +23,7 @@ class FamilyTurnInput:
     open_obligations: list[str] | None = None
     previous_live_state: dict[str, Any] | None = None
     previous_handoff: dict[str, Any] | None = None
+    observed_outcome: ObservedOutcome | dict[str, Any] | None = None
     explicit_mode_hint: str = ""
 
     def __post_init__(self) -> None:
@@ -48,6 +51,10 @@ class FamilyTurnInput:
             self.previous_live_state = {}
         if self.previous_handoff is None:
             self.previous_handoff = {}
+        if self.observed_outcome is None:
+            self.observed_outcome = ObservedOutcome()
+        elif isinstance(self.observed_outcome, dict):
+            self.observed_outcome = ObservedOutcome(**self.observed_outcome)
         if not isinstance(self.disagreement_events, list) or not all(isinstance(item, dict) for item in self.disagreement_events):
             raise TypeError("disagreement_events must be list[dict]")
         if not isinstance(self.open_obligations, list) or not all(isinstance(item, str) for item in self.open_obligations):
@@ -56,6 +63,8 @@ class FamilyTurnInput:
             raise TypeError("previous_live_state must be dict[str, Any] | None")
         if not isinstance(self.previous_handoff, dict):
             raise TypeError("previous_handoff must be dict[str, Any] | None")
+        if not isinstance(self.observed_outcome, ObservedOutcome):
+            raise TypeError("observed_outcome must be ObservedOutcome | dict[str, Any] | None")
         if not isinstance(self.action_required, bool):
             raise TypeError("action_required must be a bool")
         if not isinstance(self.archive_consulted, bool):

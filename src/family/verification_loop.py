@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import re
 
+from family.observation_types import ObservedOutcome
 from family.verification_types import ActionExecution, ActionIntent, VerificationRecord
 
 
@@ -16,7 +17,7 @@ class VerificationLoop:
         action_intent: ActionIntent | dict,
         action_execution: ActionExecution | dict | None = None,
         *,
-        observed_outcome: str = "",
+        observed_outcome: ObservedOutcome | dict | str | None = None,
         expected_change_observable: bool = True,
         notes: list[str] | None = None,
     ) -> VerificationRecord:
@@ -24,28 +25,51 @@ class VerificationLoop:
             action_intent = ActionIntent(**action_intent)
         if isinstance(action_execution, dict):
             action_execution = ActionExecution(**action_execution)
+        if isinstance(observed_outcome, dict):
+            observed_outcome = ObservedOutcome(**observed_outcome)
+        elif isinstance(observed_outcome, str):
+            observed_outcome = ObservedOutcome(observed_outcome=observed_outcome)
         if action_execution is None:
             action_execution = ActionExecution()
+        if observed_outcome is None:
+            observed_outcome = ObservedOutcome()
         if notes is None:
             notes = []
 
         merged_notes = [*action_intent.notes, *action_execution.notes, *notes]
-        observed_outcome = observed_outcome or ""
+        observed_text = observed_outcome.observed_outcome or ""
+        evidence_authority = observed_outcome.evidence_authority
 
         if not expected_change_observable:
             merged_notes.append("expected change is not yet observable")
             status = "unknown"
-        elif not observed_outcome.strip():
+        elif not observed_text.strip():
             merged_notes.append("no observed outcome is available yet")
             if action_execution.executed_action.strip():
                 merged_notes.append("execution text alone does not verify completion")
             status = "unknown"
-        elif self._observed_matches_expected(action_intent.expected_change, observed_outcome):
+        elif evidence_authority == "weak":
+            merged_notes.append("observed evidence is too weak to verify completion")
+            status = "unknown"
+        elif self._observed_matches_expected(action_intent.expected_change, observed_text):
             merged_notes.append("observed outcome matches expected change")
+            merged_notes.append(f"evidence authority: {evidence_authority}")
             status = "passed"
+        elif evidence_authority == "operator_reported" and self._has_meaningful_overlap(action_intent.expected_change, observed_text):
+            merged_notes.append("observed outcome is ambiguous against expected change")
+            merged_notes.append(f"evidence authority: {evidence_authority}")
+            status = "unknown"
         else:
             merged_notes.append("observed outcome does not match expected change")
+            merged_notes.append(f"evidence authority: {evidence_authority}")
             status = "failed"
+
+        if observed_outcome.evidence_source:
+            merged_notes.append(f"evidence source: {observed_outcome.evidence_source}")
+        if observed_outcome.observed_at:
+            merged_notes.append(f"observed at: {observed_outcome.observed_at}")
+        if observed_outcome.notes:
+            merged_notes.append(observed_outcome.notes)
 
         if (
             action_execution.executed_action.strip()
@@ -58,9 +82,9 @@ class VerificationLoop:
             intended_action=action_intent.intended_action,
             executed_action=action_execution.executed_action,
             expected_change=action_intent.expected_change,
-            observed_outcome=observed_outcome,
+            observed_outcome=observed_text,
             verification_status=status,
-            evidence=list(action_execution.evidence),
+            evidence=self._build_evidence(action_execution, observed_outcome),
             notes=merged_notes,
         )
 
@@ -76,6 +100,20 @@ class VerificationLoop:
         if not expected_tokens:
             return False
         return expected_tokens.issubset(observed_tokens)
+
+    @staticmethod
+    def _has_meaningful_overlap(expected_change: str, observed_outcome: str) -> bool:
+        expected_tokens = _meaningful_tokens(expected_change)
+        observed_tokens = _meaningful_tokens(observed_outcome)
+        overlap = expected_tokens.intersection(observed_tokens)
+        return bool(expected_tokens and overlap)
+
+    @staticmethod
+    def _build_evidence(action_execution: ActionExecution, observed_outcome: ObservedOutcome) -> list[str]:
+        evidence = list(action_execution.evidence)
+        if observed_outcome.evidence_source:
+            evidence.append(f"{observed_outcome.evidence_authority}:{observed_outcome.evidence_source}")
+        return evidence
 
     @staticmethod
     def _looks_like_success_text(text: str) -> bool:

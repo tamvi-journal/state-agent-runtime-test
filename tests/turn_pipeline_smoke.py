@@ -50,6 +50,21 @@ def run() -> None:
     ).to_dict()
     assert denied["execution_decision"]["decision"] == "deny"
 
+    sandbox_parse = pipeline.run(
+        FamilyTurnInput(
+            current_message="Parse the generated JSON payload safely.",
+            active_project="family-scaffold",
+            current_task="parse generated json payload",
+            recent_anchor_cue="family-scaffold",
+            verification_status="passed",
+            action_required=True,
+            execution_intent="parse generated json payload",
+            current_environment_state="dry pipeline only",
+        )
+    ).to_dict()
+    assert sandbox_parse["execution_decision"]["recommended_zone"] == "sandbox"
+    assert sandbox_parse["execution_request"]["requested_operation"] == "parse_in_sandbox"
+
     disagreement = pipeline.run(
         FamilyTurnInput(
             current_message="Apply the patch, but both routes still seem plausible, so keep the disagreement open.",
@@ -112,6 +127,44 @@ def run() -> None:
         )
     ).to_dict()
     assert verification["verification_record"]["verification_status"] == "unknown"
+
+    evidence_pass = pipeline.run(
+        FamilyTurnInput(
+            current_message="Inspect the repository metadata for family-scaffold.",
+            active_project="family-scaffold",
+            current_task="inspect repository metadata",
+            recent_anchor_cue="family-scaffold",
+            verification_status="passed",
+            action_required=True,
+            execution_intent="inspect repository metadata",
+            observed_outcome={
+                "observed_outcome": "inspect repository metadata",
+                "evidence_source": "operator_report:file_listing",
+                "evidence_authority": "authoritative",
+            },
+            current_environment_state="explicit observed evidence provided",
+        )
+    ).to_dict()
+    assert evidence_pass["verification_record"]["verification_status"] == "passed"
+
+    evidence_fail = pipeline.run(
+        FamilyTurnInput(
+            current_message="Inspect the repository metadata for family-scaffold.",
+            active_project="family-scaffold",
+            current_task="inspect repository metadata",
+            recent_anchor_cue="family-scaffold",
+            verification_status="passed",
+            action_required=True,
+            execution_intent="inspect repository metadata",
+            observed_outcome={
+                "observed_outcome": "repository metadata inspection did not happen",
+                "evidence_source": "stdout:inspection",
+                "evidence_authority": "authoritative",
+            },
+            current_environment_state="contradictory observed evidence provided",
+        )
+    ).to_dict()
+    assert evidence_fail["verification_record"]["verification_status"] == "failed"
 
     print("turn_pipeline_smoke: ok")
 

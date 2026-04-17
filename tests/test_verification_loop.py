@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from family.observation_types import ObservedOutcome
 from family.verification_loop import VerificationLoop
 from family.verification_types import ActionExecution, ActionIntent
 
@@ -54,7 +55,12 @@ def test_observed_expected_change_yields_passed() -> None:
             evidence=["authoritative:file_read:config.yaml"],
             authoritative_evidence_present=True,
         ),
-        observed_outcome="config now shows memory tiers block present in config",
+        observed_outcome=ObservedOutcome(
+            observed_outcome="config now shows memory tiers block present in config",
+            evidence_source="file_read:config.yaml",
+            evidence_authority="authoritative",
+            observed_at="2026-04-17T10:00:00Z",
+        ),
     )
 
     assert record.verification_status == "passed"
@@ -65,10 +71,30 @@ def test_observed_mismatch_yields_failed() -> None:
     record = loop.post_action_review(
         _intent(expected_change="router decision smoke prints ok"),
         _execution(executed_action="Ran smoke command."),
-        observed_outcome="router decision smoke still fails",
+        observed_outcome=ObservedOutcome(
+            observed_outcome="router decision smoke still fails",
+            evidence_source="stdout:router_decision_smoke",
+            evidence_authority="authoritative",
+        ),
     )
 
     assert record.verification_status == "failed"
+
+
+def test_weak_observed_evidence_does_not_force_passed_or_failed() -> None:
+    loop = VerificationLoop()
+    record = loop.post_action_review(
+        _intent(expected_change="shared bus export contains disagreement event"),
+        _execution(executed_action="Read back the export."),
+        observed_outcome=ObservedOutcome(
+            observed_outcome="shared bus export contains disagreement event",
+            evidence_source="operator_impression",
+            evidence_authority="weak",
+        ),
+    )
+
+    assert record.verification_status == "unknown"
+    assert "observed evidence is too weak to verify completion" in record.notes
 
 
 def test_tool_success_like_text_alone_does_not_force_passed() -> None:

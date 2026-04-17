@@ -52,6 +52,81 @@ def test_action_required_low_risk_inspection_turn_produces_execution_decision_an
 
     assert result["execution_request"]["action_type"] == "inspect"
     assert result["execution_decision"]["decision"] == "allow"
+    assert result["execution_request"]["requested_operation"] == "inspect_metadata"
+    assert result["verification_record"]["verification_status"] == "unknown"
+
+
+def test_pipeline_parsing_request_prefers_sandbox() -> None:
+    pipeline = FamilyTurnPipeline()
+    result = pipeline.run(
+        _input(
+            current_message="Parse the generated JSON payload safely.",
+            current_task="parse generated json payload",
+            action_required=True,
+            execution_intent="parse generated json payload",
+        )
+    ).to_dict()
+
+    assert result["execution_request"]["requested_operation"] == "parse_in_sandbox"
+    assert result["execution_decision"]["recommended_zone"] == "sandbox"
+
+
+def test_authoritative_matching_observed_outcome_allows_passed_verification() -> None:
+    pipeline = FamilyTurnPipeline()
+    result = pipeline.run(
+        _input(
+            current_message="Inspect the repository metadata for family-scaffold.",
+            current_task="inspect repository metadata",
+            action_required=True,
+            execution_intent="inspect repository metadata",
+            observed_outcome={
+                "observed_outcome": "inspect repository metadata",
+                "evidence_source": "operator_report:file_listing",
+                "evidence_authority": "authoritative",
+                "observed_at": "2026-04-17T10:00:00Z",
+            },
+        )
+    ).to_dict()
+
+    assert result["execution_decision"]["decision"] == "allow"
+    assert result["verification_record"]["verification_status"] == "passed"
+
+
+def test_authoritative_contradictory_observed_outcome_allows_failed_verification() -> None:
+    pipeline = FamilyTurnPipeline()
+    result = pipeline.run(
+        _input(
+            current_message="Inspect the repository metadata for family-scaffold.",
+            current_task="inspect repository metadata",
+            action_required=True,
+            execution_intent="inspect repository metadata",
+            observed_outcome={
+                "observed_outcome": "repository metadata inspection did not happen",
+                "evidence_source": "stdout:inspection",
+                "evidence_authority": "authoritative",
+            },
+        )
+    ).to_dict()
+
+    assert result["verification_record"]["verification_status"] == "failed"
+
+
+def test_weak_observed_outcome_does_not_force_pipeline_verification() -> None:
+    pipeline = FamilyTurnPipeline()
+    result = pipeline.run(
+        _input(
+            current_message="Inspect the repository metadata for family-scaffold.",
+            current_task="inspect repository metadata",
+            action_required=True,
+            execution_intent="inspect repository metadata",
+            observed_outcome={
+                "observed_outcome": "inspect repository metadata",
+                "evidence_source": "operator_report",
+                "evidence_authority": "weak",
+            },
+        )
+    ).to_dict()
+
     assert result["verification_record"]["verification_status"] == "unknown"
 
 
@@ -221,6 +296,7 @@ def test_outputs_remain_compact_and_not_transcript_like() -> None:
     }
     assert "transcript" not in result
     assert "history" not in result
+    assert "full_monitor_log" not in result
 
 
 def test_previous_handoff_still_improves_delta_without_large_synthetic_baseline() -> None:

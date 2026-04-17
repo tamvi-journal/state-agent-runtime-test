@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from family.observation_types import ObservedOutcome
 from family.verification_loop import VerificationLoop
 from family.verification_types import ActionExecution, ActionIntent
 
@@ -25,7 +26,11 @@ def run() -> None:
             evidence=["authoritative:stdout:router_decision_smoke: ok"],
             authoritative_evidence_present=True,
         ),
-        observed_outcome="router decision smoke prints ok",
+        observed_outcome=ObservedOutcome(
+            observed_outcome="router decision smoke prints ok",
+            evidence_source="stdout:router_decision_smoke",
+            evidence_authority="authoritative",
+        ),
     )
     assert passed.verification_status == "passed"
 
@@ -35,7 +40,11 @@ def run() -> None:
             expected_change="shared export includes only compact disagreement data",
         ),
         ActionExecution(executed_action="Updated export helper."),
-        observed_outcome="shared export still includes local perspective notes",
+        observed_outcome=ObservedOutcome(
+            observed_outcome="shared export still includes local perspective notes",
+            evidence_source="stdout:shared_bus_export",
+            evidence_authority="authoritative",
+        ),
     )
     assert failed.verification_status == "failed"
 
