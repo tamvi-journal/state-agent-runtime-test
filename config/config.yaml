@@ -1,0 +1,8 @@
+phase_0_1:
+  boundary_awareness:
+    thresholds:
+      protective_boundary_confidence_min: 0.70
+      false_block_confidence_min: 0.60
+      expected_loss_if_bypassed_high: 0.70
+      monitor_pressure_high: 0.70
+    notes: "Placeholders only for scaffold. Tune in later phases."
