@@ -40,36 +40,51 @@ class FamilyTurnPipeline:
         if isinstance(turn_input, dict):
             turn_input = FamilyTurnInput(**turn_input)
 
-        disagreement_event = self._primary_disagreement_event(turn_input.disagreement_events)
+        previous_handoff = dict(turn_input.previous_handoff)
+        seeded_anchor = turn_input.recent_anchor_cue or str(previous_handoff.get("continuity_anchor", ""))
+        seeded_project = turn_input.active_project or str(previous_handoff.get("active_project", ""))
+        seeded_verification = turn_input.verification_status or str(previous_handoff.get("verification_status", ""))
+        seeded_obligations = (
+            list(turn_input.open_obligations)
+            if turn_input.open_obligations
+            else list(previous_handoff.get("open_obligations", []))
+        )
+        disagreement_events = list(turn_input.disagreement_events)
+        if not disagreement_events:
+            carried = self._handoff_disagreement_event(previous_handoff)
+            if carried is not None:
+                disagreement_events = [carried]
+
+        disagreement_event = self._primary_disagreement_event(disagreement_events)
         disagreement_open = bool(disagreement_event and disagreement_event.still_open)
 
         context_view = self.context_builder.build(
             {
-                "active_project": turn_input.active_project,
-                "active_mode": "",
+                "active_project": seeded_project,
+                "active_mode": str(previous_handoff.get("active_mode", "")),
                 "current_task": turn_input.current_task,
                 "current_environment_state": turn_input.current_environment_state or "dry family turn pipeline",
                 "last_verified_result": turn_input.last_verified_result,
-                "open_obligations": turn_input.open_obligations,
-                "verification_status": turn_input.verification_status,
-                "disagreement_events": turn_input.disagreement_events,
+                "open_obligations": seeded_obligations,
+                "verification_status": seeded_verification,
+                "disagreement_events": disagreement_events,
                 "risk_hint": turn_input.monitor_hint,
                 "monitor_summary": None,
-                "recent_anchor_cue": turn_input.recent_anchor_cue,
+                "recent_anchor_cue": seeded_anchor,
             }
         ).to_dict()
 
         mode_result = self.mode_inference.infer(
             {
                 "current_message": turn_input.current_message,
-                "active_project": turn_input.active_project,
+                "active_project": seeded_project,
                 "current_task": turn_input.current_task,
-                "recent_anchor_cue": turn_input.recent_anchor_cue,
+                "recent_anchor_cue": seeded_anchor,
                 "context_view_summary": self._context_summary(context_view),
                 "action_required": turn_input.action_required,
                 "disagreement_open": disagreement_open,
-                "verification_status": turn_input.verification_status,
-                "explicit_mode_hint": turn_input.explicit_mode_hint,
+                "verification_status": seeded_verification,
+                "explicit_mode_hint": turn_input.explicit_mode_hint or str(previous_handoff.get("active_mode", "")),
             }
         ).to_dict()
 
@@ -101,30 +116,30 @@ class FamilyTurnPipeline:
             {
                 "context_view": context_view,
                 "mode_inference_result": mode_result,
-                "verification_status": turn_input.verification_status,
-                "active_project": turn_input.active_project,
-                "recent_anchor_cue": turn_input.recent_anchor_cue,
+                "verification_status": seeded_verification,
+                "active_project": seeded_project,
+                "recent_anchor_cue": seeded_anchor,
                 "disagreement_open": disagreement_open,
                 "monitor_summary": mirror_summary,
-                "current_axis_hint": "",
+                "current_axis_hint": str(previous_handoff.get("current_axis", "")),
             }
         ).to_dict()
 
         effort_route = self.effort_allocator.route(
             EffortInput(
                 task_type=self._task_type(turn_input.current_message, turn_input.current_task),
-                domain=self._domain(turn_input.active_project, mode_result["active_mode"]),
+                domain=self._domain(seeded_project, mode_result["active_mode"]),
                 active_mode=mode_result["active_mode"],
                 mode_confidence=float(mode_result["confidence"]),
                 ambiguity_score=self._ambiguity_score(turn_input.current_message, disagreement_open, mirror_summary),
-                risk_score=self._risk_score(turn_input.verification_status, disagreement_open, mirror_summary),
+                risk_score=self._risk_score(seeded_verification, disagreement_open, mirror_summary),
                 stakes_signal=None,
                 stakes_confidence=0.0,
                 action_required=turn_input.action_required,
                 memory_commit_possible=False,
                 disagreement_likelihood=0.75 if disagreement_open else 0.10,
-                cue_strength=self._cue_strength(turn_input.current_message, turn_input.recent_anchor_cue, turn_input.active_project),
-                verification_gap_estimate=0.75 if turn_input.verification_status.lower() in {"pending", "failed", "unknown"} else 0.10,
+                cue_strength=self._cue_strength(turn_input.current_message, seeded_anchor, seeded_project),
+                verification_gap_estimate=0.75 if seeded_verification.lower() in {"pending", "failed", "unknown"} else 0.10,
                 high_risk_domain=False,
                 unanswerable_likelihood=0.65 if "not sure" in turn_input.current_message.lower() else 0.10,
             )
@@ -136,18 +151,18 @@ class FamilyTurnPipeline:
                 effort_route=self.effort_allocator.route(
                     EffortInput(
                         task_type=self._task_type(turn_input.current_message, turn_input.current_task),
-                        domain=self._domain(turn_input.active_project, mode_result["active_mode"]),
+                        domain=self._domain(seeded_project, mode_result["active_mode"]),
                         active_mode=mode_result["active_mode"],
                         mode_confidence=float(mode_result["confidence"]),
                         ambiguity_score=self._ambiguity_score(turn_input.current_message, disagreement_open, mirror_summary),
-                        risk_score=self._risk_score(turn_input.verification_status, disagreement_open, mirror_summary),
+                        risk_score=self._risk_score(seeded_verification, disagreement_open, mirror_summary),
                         stakes_signal=None,
                         stakes_confidence=0.0,
                         action_required=turn_input.action_required,
                         memory_commit_possible=False,
                         disagreement_likelihood=0.75 if disagreement_open else 0.10,
-                        cue_strength=self._cue_strength(turn_input.current_message, turn_input.recent_anchor_cue, turn_input.active_project),
-                        verification_gap_estimate=0.75 if turn_input.verification_status.lower() in {"pending", "failed", "unknown"} else 0.10,
+                        cue_strength=self._cue_strength(turn_input.current_message, seeded_anchor, seeded_project),
+                        verification_gap_estimate=0.75 if seeded_verification.lower() in {"pending", "failed", "unknown"} else 0.10,
                         high_risk_domain=False,
                         unanswerable_likelihood=0.65 if "not sure" in turn_input.current_message.lower() else 0.10,
                     )
@@ -159,9 +174,9 @@ class FamilyTurnPipeline:
                     task_type=self._task_type(turn_input.current_message, turn_input.current_task),
                     phase="pre_action",
                 ),
-                verification_status=turn_input.verification_status,
+                verification_status=seeded_verification,
                 active_mode=mode_result["active_mode"],
-                domain=self._domain(turn_input.active_project, mode_result["active_mode"]),
+                domain=self._domain(seeded_project, mode_result["active_mode"]),
                 action_required=turn_input.action_required,
             )
         ).to_dict()
@@ -170,7 +185,10 @@ class FamilyTurnPipeline:
         execution_decision = {}
         approval_request = {}
         if turn_input.action_required:
-            execution_request_obj = self._build_execution_request(turn_input)
+            execution_request_obj = self._build_execution_request(
+                turn_input,
+                active_project=seeded_project,
+            )
             execution_request = execution_request_obj.to_dict()
             execution_decision_obj = self.execution_gate.assess(execution_request_obj)
             execution_decision = execution_decision_obj.to_dict()
@@ -183,18 +201,21 @@ class FamilyTurnPipeline:
         verification_record = self._verification_placeholder(
             turn_input,
             execution_decision=execution_decision,
+            seeded_verification=seeded_verification,
         )
 
         previous_live_state = (
             dict(turn_input.previous_live_state)
             if turn_input.previous_live_state
+            else self._live_state_from_handoff(previous_handoff)
+            if previous_handoff
             else self._default_previous_live_state(turn_input, context_view, mode_result)
         )
         delta_log_event = self.delta_builder.build(
             {
                 "previous_live_state": previous_live_state,
                 "current_live_state": live_state,
-                "recent_trigger_cue": turn_input.recent_anchor_cue or turn_input.current_task or "dry family turn",
+                "recent_trigger_cue": seeded_anchor or turn_input.current_task or "dry family turn",
                 "archive_consulted": turn_input.archive_consulted,
                 "verification_before": str(previous_live_state.get("verification_status", "")),
                 "verification_after": live_state["verification_status"],
@@ -206,10 +227,10 @@ class FamilyTurnPipeline:
                 "context_view": context_view,
                 "live_state": live_state,
                 "delta_log_event": delta_log_event,
-                "recent_anchor_cue": turn_input.recent_anchor_cue,
-                "verification_status": turn_input.verification_status,
+                "recent_anchor_cue": seeded_anchor,
+                "verification_status": seeded_verification,
                 "disagreement_open": disagreement_open,
-                "current_question": "",
+                "current_question": str(previous_handoff.get("compression_summary", {}).get("active_question", "")),
                 "task_focus": turn_input.current_task,
             }
         ).to_dict()
@@ -217,15 +238,15 @@ class FamilyTurnPipeline:
         reactivation_result = self.reactivation_layer.build(
             {
                 "current_message": turn_input.current_message,
-                "detected_cues": self._detected_cues(turn_input.current_message, turn_input.recent_anchor_cue, turn_input.active_project),
-                "active_project_hint": turn_input.active_project,
+                "detected_cues": self._detected_cues(turn_input.current_message, seeded_anchor, seeded_project),
+                "active_project_hint": seeded_project,
                 "compression_summary": compression_summary,
                 "context_view": context_view,
                 "live_state": live_state,
-                "recent_anchor_cue": turn_input.recent_anchor_cue,
+                "recent_anchor_cue": seeded_anchor,
                 "disagreement_open": disagreement_open,
-                "verification_status": turn_input.verification_status,
-                "mode_hint": mode_result["active_mode"],
+                "verification_status": seeded_verification,
+                "mode_hint": turn_input.explicit_mode_hint or str(previous_handoff.get("active_mode", "")) or mode_result["active_mode"],
             }
         ).to_dict()
 
@@ -246,8 +267,10 @@ class FamilyTurnPipeline:
             notes.append("no runtime action was requested, so execution objects remained empty")
         if disagreement_open:
             notes.append("open disagreement remained visible across context, live state, router, and compression")
-        if turn_input.verification_status.lower() in {"pending", "failed", "unknown"}:
+        if seeded_verification.lower() in {"pending", "failed", "unknown"}:
             notes.append("verification posture remained visible and was not auto-passed")
+        if previous_handoff:
+            notes.append("previous handoff supplied compact continuity baton for this turn")
 
         return FamilyTurnResult(
             context_view=context_view,
@@ -363,10 +386,11 @@ class FamilyTurnPipeline:
         turn_input: FamilyTurnInput,
         *,
         execution_decision: dict[str, Any],
+        seeded_verification: str,
     ) -> dict[str, Any]:
         notes = ["dry pipeline canary: no real action executed, so verification is conservative"]
-        if turn_input.verification_status:
-            notes.append(f"incoming verification posture: {turn_input.verification_status}")
+        if seeded_verification:
+            notes.append(f"incoming verification posture: {seeded_verification}")
         if turn_input.last_verified_result:
             notes.append("last verified result is carried as compact context, not fresh verification")
         if execution_decision:
@@ -388,14 +412,14 @@ class FamilyTurnPipeline:
         }
 
     @staticmethod
-    def _build_execution_request(turn_input: FamilyTurnInput) -> ExecutionRequest:
+    def _build_execution_request(turn_input: FamilyTurnInput, *, active_project: str) -> ExecutionRequest:
         haystack = f"{turn_input.current_message} {turn_input.current_task} {turn_input.execution_intent}".lower()
 
         if any(token in haystack for token in ("inspect", "read", "list", "metadata")):
             return ExecutionRequest(
                 action_type="inspect",
                 target_type="repo_metadata",
-                target_path_or_ref=turn_input.active_project or turn_input.current_task,
+                target_path_or_ref=active_project or turn_input.current_task,
                 requested_zone="inspection",
                 writes_state=False,
                 executes_code=False,
@@ -425,7 +449,7 @@ class FamilyTurnPipeline:
             return ExecutionRequest(
                 action_type="write_file",
                 target_type="repo_file",
-                target_path_or_ref=turn_input.execution_intent or turn_input.current_task or turn_input.active_project,
+                target_path_or_ref=turn_input.execution_intent or turn_input.current_task or active_project,
                 requested_zone="host",
                 writes_state=True,
                 executes_code=False,
@@ -467,6 +491,51 @@ class FamilyTurnPipeline:
             "user_signal": context_view["task_focus"],
             "archive_needed": False,
             "verification_status": "passed" if turn_input.last_verified_result and not turn_input.verification_status else turn_input.verification_status,
+        }
+
+    @staticmethod
+    def _live_state_from_handoff(previous_handoff: dict[str, Any]) -> dict[str, Any]:
+        if not previous_handoff:
+            return {}
+        disagreement_open = str(previous_handoff.get("shared_disagreement_status", "none")).startswith("open:")
+        verification_status = str(previous_handoff.get("verification_status", ""))
+        tension_flags: list[str] = []
+        if disagreement_open:
+            tension_flags.append("open_disagreement")
+        if verification_status.lower() in {"pending", "failed", "unknown"}:
+            tension_flags.append("verification_unsettled")
+        return {
+            "active_mode": str(previous_handoff.get("active_mode", "")),
+            "current_axis": str(previous_handoff.get("current_axis", "")),
+            "coherence_level": "strained" if tension_flags else "stable",
+            "tension_flags": tension_flags,
+            "policy_pressure": "low",
+            "active_project": str(previous_handoff.get("active_project", "")),
+            "continuity_anchor": str(previous_handoff.get("continuity_anchor", "")),
+            "user_signal": str(previous_handoff.get("compression_summary", {}).get("active_question", "")),
+            "archive_needed": False,
+            "verification_status": verification_status,
+        }
+
+    @staticmethod
+    def _handoff_disagreement_event(previous_handoff: dict[str, Any]) -> dict[str, Any] | None:
+        status = str(previous_handoff.get("shared_disagreement_status", "none"))
+        if not status.startswith("open:"):
+            return None
+        parts = status.split(":")
+        disagreement_type = parts[1] if len(parts) > 1 else "action"
+        severity = 0.82 if "meaningful" in status else 0.55
+        return {
+            "event_id": "dg_handoff",
+            "timestamp": "2026-04-17T00:00:00Z",
+            "disagreement_type": disagreement_type,
+            "tracey_position": "carry forward continuity-sensitive line",
+            "seyn_position": "carry forward verification-sensitive line",
+            "severity": severity,
+            "still_open": True,
+            "later_resolution": "",
+            "house_law_implicated": "handoff_preserves_open_disagreement_compactly",
+            "epistemic_resolution_claimed": False,
         }
 
     @staticmethod
