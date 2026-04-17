@@ -1,7 +1,13 @@
 # state-memory-agent-main
 
 An active canary runtime repo for bounded agent execution, plurality-aware coordination, and continuity-sensitive synthesis.
+<<<<<<< HEAD
 
+=======
+git add docs/CANONICAL_STATUS.md
+git commit -m "docs: add canonical repo role lock and current build status"
+git push origin main
+>>>>>>> d7497ef (docs: restore canonical README spine for active repo)
 ## Core thesis
 
 This repository is not building a generic multi-agent chatbot.
