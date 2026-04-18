@@ -1,0 +1,77 @@
+{
+  "workflow_name": "macro_to_vn_sector_map",
+  "run_id": "2026-03-29-morning-001",
+  "timestamp": "2026-03-29T00:40:00Z",
+  "status": "success",
+  "data": {
+    "scan_date": "2026-03-29",
+    "vn_sector_bias": [
+      {
+        "bias_id": "sector_bias_001",
+        "trigger_signal_id": "oil_001",
+        "sector": "oil_gas",
+        "direction": "positive",
+        "strength_score": 8.1,
+        "confidence": "high",
+        "decay_days": 3,
+        "reason": "oil_up",
+        "watch_stocks": [
+          "PVD",
+          "PVS",
+          "BSR",
+          "OIL"
+        ],
+        "notes": "Higher oil supports upstream and refining sentiment."
+      },
+      {
+        "bias_id": "sector_bias_002",
+        "trigger_signal_id": "oil_001",
+        "sector": "airlines",
+        "direction": "negative",
+        "strength_score": 6.8,
+        "confidence": "medium",
+        "decay_days": 3,
+        "reason": "fuel_cost_pressure",
+        "watch_stocks": [
+          "HVN",
+          "VJC"
+        ],
+        "notes": "Fuel cost pressure is negative for airlines."
+      },
+      {
+        "bias_id": "sector_bias_003",
+        "trigger_signal_id": "usd_001",
+        "sector": "exporters",
+        "direction": "positive",
+        "strength_score": 6.5,
+        "confidence": "medium",
+        "decay_days": 5,
+        "reason": "usd_strength",
+        "watch_stocks": [
+          "VHC",
+          "ANV",
+          "TCM",
+          "TNG",
+          "PTB"
+        ],
+        "notes": "Stronger USD can help exporters."
+      },
+      {
+        "bias_id": "sector_bias_004",
+        "trigger_signal_id": "china_001",
+        "sector": "steel",
+        "direction": "positive",
+        "strength_score": 7.3,
+        "confidence": "medium",
+        "decay_days": 7,
+        "reason": "china_stimulus",
+        "watch_stocks": [
+          "HPG",
+          "HSG",
+          "NKG"
+        ],
+        "notes": "China stimulus may support steel/material demand."
+      }
+    ]
+  }
+}

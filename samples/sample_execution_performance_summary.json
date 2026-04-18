@@ -1,0 +1,25 @@
+{
+  "workflow_name": "execution_sandbox_engine",
+  "run_id": "2026-04-30-exec-summary-001",
+  "timestamp": "2026-04-30T12:00:00Z",
+  "status": "success",
+  "data": {
+    "paper_capital_start": 50,
+    "paper_capital_current": 53.4,
+    "net_return_pct": 6.8,
+    "trade_count": 14,
+    "win_rate_pct": 50,
+    "avg_win_r_multiple": 1.9,
+    "avg_loss_r_multiple": -1.0,
+    "expectancy_r": 0.45,
+    "profit_factor": 1.9,
+    "max_drawdown_pct": 4.2,
+    "average_hold_days": 6.1,
+    "best_sector": "oil_gas",
+    "worst_sector": "airlines",
+    "most_common_failure_reason": "failed_breakout",
+    "most_common_rejection_reason": "sector_not_active",
+    "open_positions": 1,
+    "closed_positions": 13
+  }
+}

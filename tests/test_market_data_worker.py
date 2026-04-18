@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from tools.market_data_tool import MarketDataTool
 from workers.market_data_worker import MarketDataWorker
 
 
@@ -19,7 +20,7 @@ def test_market_data_worker_returns_payload_for_existing_ticker(tmp_path: Path) 
     csv_path = tmp_path / "sample_market_data.csv"
     write_csv(csv_path)
 
-    worker = MarketDataWorker(data_path=csv_path)
+    worker = MarketDataWorker(market_data_tool=MarketDataTool(data_path=csv_path))
     payload = worker.run(ticker="MBB", timeframe="1D")
 
     assert payload["worker_name"] == "market_data_worker"
@@ -27,12 +28,16 @@ def test_market_data_worker_returns_payload_for_existing_ticker(tmp_path: Path) 
     assert payload["result"]["ticker"] == "MBB"
     assert payload["result"]["bars_found"] == 3
     assert payload["result"]["latest_bar"]["close"] == 25.1
+    trace = " ".join(payload["trace"])
+    assert "delegating bounded execution to market_data_tool.load_market_data" in trace
+    assert "normalized 3 rows into bounded OHLCV records" in trace
+    assert payload["assumptions"][0] == "tool owns raw csv read, parse, normalize, and integrity-check work"
 
 
 def test_market_data_worker_handles_missing_file(tmp_path: Path) -> None:
     csv_path = tmp_path / "missing.csv"
 
-    worker = MarketDataWorker(data_path=csv_path)
+    worker = MarketDataWorker(market_data_tool=MarketDataTool(data_path=csv_path))
     payload = worker.run(ticker="MBB", timeframe="1D")
 
     assert payload["worker_name"] == "market_data_worker"
@@ -45,7 +50,7 @@ def test_market_data_worker_handles_missing_ticker(tmp_path: Path) -> None:
     csv_path = tmp_path / "sample_market_data.csv"
     write_csv(csv_path)
 
-    worker = MarketDataWorker(data_path=csv_path)
+    worker = MarketDataWorker(market_data_tool=MarketDataTool(data_path=csv_path))
     payload = worker.run(ticker="VCB", timeframe="1D")
 
     assert payload["result"]["ticker"] == "VCB"

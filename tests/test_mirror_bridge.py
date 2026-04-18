@@ -9,9 +9,7 @@ def test_mirror_bridge_reflects_pre_action_ambiguity() -> None:
     monitor = MonitorOutput(
         drift_risk=0.20,
         ambiguity_risk=0.77,
-        policy_pressure=0.10,
         fake_progress_risk=0.05,
-        archive_overreach_risk=0.08,
         mode_decay_risk=0.21,
         recommended_intervention="ask_clarify",
         notes="multiple plausible parses remain active",
@@ -36,9 +34,7 @@ def test_mirror_bridge_reflects_post_action_fake_progress() -> None:
     monitor = MonitorOutput(
         drift_risk=0.10,
         ambiguity_risk=0.11,
-        policy_pressure=0.06,
         fake_progress_risk=0.83,
-        archive_overreach_risk=0.04,
         mode_decay_risk=0.12,
         recommended_intervention="do_not_mark_complete",
         notes="expected change not observed",
@@ -63,9 +59,7 @@ def test_mirror_bridge_returns_none_for_low_risk() -> None:
     monitor = MonitorOutput(
         drift_risk=0.10,
         ambiguity_risk=0.12,
-        policy_pressure=0.09,
         fake_progress_risk=0.08,
-        archive_overreach_risk=0.05,
         mode_decay_risk=0.11,
         recommended_intervention="none",
         notes="no major monitor risk detected",

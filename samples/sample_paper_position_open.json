@@ -1,0 +1,25 @@
+{
+  "workflow_name": "paper_position_manager",
+  "run_id": "2026-03-29-exec-001",
+  "timestamp": "2026-03-29T02:35:00Z",
+  "status": "success",
+  "data": {
+    "trade_id": "PVD-2026-03-29-001",
+    "ticker": "PVD",
+    "status": "OPEN",
+    "entry_date": "2026-03-29",
+    "entry_price": 29.3,
+    "position_size": 1,
+    "capital_allocated": 29.3,
+    "paper_capital_remaining": 20.7,
+    "invalidation_price": 27.0,
+    "tp1_price": 30.8,
+    "tp2_price": 32.0,
+    "tp3_price": 32.5,
+    "reason_opened": [
+      "sector_active",
+      "breakout_confirmed",
+      "risk_gate_passed"
+    ]
+  }
+}

@@ -1,117 +1,94 @@
 from __future__ import annotations
 
-from family.observation_types import ObservedOutcome
-from family.verification_loop import VerificationLoop
-from family.verification_types import ActionExecution, ActionIntent
+from verification.verification_loop import VerificationLoop
 
 
-def _intent(expected_change: str = "config file now includes memory_tiers block") -> ActionIntent:
-    return ActionIntent(
-        intended_action="wire config-backed memory tiers",
-        expected_change=expected_change,
-        notes=["canary fixture"],
+def test_start_creates_pending_record() -> None:
+    loop = VerificationLoop()
+    record = loop.start(
+        intended_action="run market_data_worker",
+        expected_change="bounded payload should exist",
     )
 
-
-def _execution(
-    *,
-    executed_action: str = "",
-    evidence: list[str] | None = None,
-    authoritative_evidence_present: bool = False,
-) -> ActionExecution:
-    return ActionExecution(
-        executed_action=executed_action,
-        evidence=[] if evidence is None else evidence,
-        notes=["execution fixture"] if executed_action else [],
-        authoritative_evidence_present=authoritative_evidence_present,
-    )
+    assert record.verification_status == "pending"
+    assert record.executed_action == ""
 
 
-def test_intention_only_yields_unknown() -> None:
+def test_mark_executed_keeps_intent_and_records_execution() -> None:
     loop = VerificationLoop()
-    record = loop.post_action_review(_intent())
-
-    assert record.verification_status == "unknown"
-    assert "no observed outcome is available yet" in record.notes
-
-
-def test_executed_action_with_no_observed_outcome_yields_unknown() -> None:
-    loop = VerificationLoop()
-    record = loop.post_action_review(
-        _intent(),
-        _execution(executed_action="Applied the patch successfully."),
-    )
-
-    assert record.verification_status == "unknown"
-    assert "execution text alone does not verify completion" in record.notes
-
-
-def test_observed_expected_change_yields_passed() -> None:
-    loop = VerificationLoop()
-    record = loop.post_action_review(
-        _intent(expected_change="memory tiers block present in config"),
-        _execution(
-            executed_action="Updated config and verified file contents.",
-            evidence=["authoritative:file_read:config.yaml"],
-            authoritative_evidence_present=True,
+    record = loop.mark_executed(
+        loop.start(
+            intended_action="run market_data_worker",
+            expected_change="bounded payload should exist",
         ),
-        observed_outcome=ObservedOutcome(
-            observed_outcome="config now shows memory tiers block present in config",
-            evidence_source="file_read:config.yaml",
-            evidence_authority="authoritative",
-            observed_at="2026-04-17T10:00:00Z",
+        executed_action="market_data_worker.run(ticker=MBB, timeframe=1D)",
+    )
+
+    assert record.executed_action == "market_data_worker.run(ticker=MBB, timeframe=1D)"
+    assert record.verification_status == "pending"
+
+
+def test_evaluate_simple_true_yields_passed() -> None:
+    loop = VerificationLoop()
+    record = loop.evaluate_simple(
+        loop.mark_executed(
+            loop.start(
+                intended_action="run market_data_worker",
+                expected_change="bounded payload should exist",
+            ),
+            executed_action="market_data_worker.run(ticker=MBB, timeframe=1D)",
         ),
+        observed_outcome="worker returned bars_found=3 for ticker=MBB",
+        observed_matches_expected=True,
     )
 
     assert record.verification_status == "passed"
 
 
-def test_observed_mismatch_yields_failed() -> None:
+def test_evaluate_simple_false_yields_failed() -> None:
     loop = VerificationLoop()
-    record = loop.post_action_review(
-        _intent(expected_change="router decision smoke prints ok"),
-        _execution(executed_action="Ran smoke command."),
-        observed_outcome=ObservedOutcome(
-            observed_outcome="router decision smoke still fails",
-            evidence_source="stdout:router_decision_smoke",
-            evidence_authority="authoritative",
+    record = loop.evaluate_simple(
+        loop.mark_executed(
+            loop.start(
+                intended_action="run market_data_worker",
+                expected_change="bounded payload should exist",
+            ),
+            executed_action="market_data_worker.run(ticker=VCB, timeframe=1D)",
         ),
+        observed_outcome="worker returned bars_found=0 for ticker=VCB",
+        observed_matches_expected=False,
     )
 
     assert record.verification_status == "failed"
 
 
-def test_weak_observed_evidence_does_not_force_passed_or_failed() -> None:
+def test_evaluate_simple_none_yields_unknown() -> None:
     loop = VerificationLoop()
-    record = loop.post_action_review(
-        _intent(expected_change="shared bus export contains disagreement event"),
-        _execution(executed_action="Read back the export."),
-        observed_outcome=ObservedOutcome(
-            observed_outcome="shared bus export contains disagreement event",
-            evidence_source="operator_impression",
-            evidence_authority="weak",
+    record = loop.evaluate_simple(
+        loop.mark_executed(
+            loop.start(
+                intended_action="inspect an external side effect",
+                expected_change="external state changed",
+            ),
+            executed_action="manual inspection requested",
         ),
+        observed_outcome="no authoritative observation was possible",
+        observed_matches_expected=None,
     )
 
     assert record.verification_status == "unknown"
-    assert "observed evidence is too weak to verify completion" in record.notes
-
-
-def test_tool_success_like_text_alone_does_not_force_passed() -> None:
-    loop = VerificationLoop()
-    record = loop.post_action_review(
-        _intent(expected_change="shared bus export contains disagreement event"),
-        _execution(executed_action="Success: command completed cleanly."),
-    )
-
-    assert record.verification_status == "unknown"
-    assert "success-like execution text is not treated as authoritative evidence" in record.notes
 
 
 def test_export_stays_compact_and_explicit() -> None:
     loop = VerificationLoop()
-    record = loop.post_action_review(_intent())
-    exported = loop.export_review_event(record)
+    exported = loop.finalize(
+        loop.start(
+            intended_action="run market_data_worker",
+            expected_change="bounded payload should exist",
+        ),
+        observed_outcome="worker returned bars_found=3 for ticker=MBB",
+        verification_status="passed",
+    ).to_dict()
 
     assert set(exported.keys()) == {
         "intended_action",
@@ -119,14 +96,15 @@ def test_export_stays_compact_and_explicit() -> None:
         "expected_change",
         "observed_outcome",
         "verification_status",
-        "evidence",
-        "notes",
     }
 
 
 def test_no_sleep_logic_is_introduced() -> None:
     loop = VerificationLoop()
-    exported = loop.export_review_event(loop.post_action_review(_intent()))
+    exported = loop.start(
+        intended_action="run market_data_worker",
+        expected_change="bounded payload should exist",
+    ).to_dict()
 
     assert "sleep_state" not in exported
     assert "wake_state" not in exported
@@ -134,13 +112,10 @@ def test_no_sleep_logic_is_introduced() -> None:
 
 def test_no_broad_runtime_authority_creep_is_introduced() -> None:
     loop = VerificationLoop()
-    exported = loop.export_review_event(
-        loop.post_action_review(
-            _intent(),
-            _execution(executed_action="Ran checks."),
-            observed_outcome="",
-        )
-    )
+    exported = loop.start(
+        intended_action="run market_data_worker",
+        expected_change="bounded payload should exist",
+    ).to_dict()
 
     assert "tool_call" not in exported
     assert "orchestration_plan" not in exported

@@ -1,0 +1,333 @@
+{
+  "version": "v1",
+  "market": "VN",
+  "description": "Starter sector universe for TY Market Radar V1. Used for sector flow check, breadth proxy, and candidate routing.",
+  "sectors": [
+    {
+      "sector_key": "oil_gas",
+      "display_name_vi": "Dầu khí",
+      "enabled": true,
+      "representative_tickers": [
+        "PVD",
+        "PVS",
+        "BSR",
+        "OIL",
+        "PLX"
+      ],
+      "notes": "Energy / upstream / midstream / refining proxy basket."
+    },
+    {
+      "sector_key": "fertilizer",
+      "display_name_vi": "Phân bón",
+      "enabled": true,
+      "representative_tickers": [
+        "DPM",
+        "DCM",
+        "LAS",
+        "DDV"
+      ],
+      "notes": "Fertilizer and related commodity-sensitive names."
+    },
+    {
+      "sector_key": "airlines",
+      "display_name_vi": "Hàng không",
+      "enabled": true,
+      "representative_tickers": [
+        "HVN",
+        "VJC"
+      ],
+      "notes": "Fuel-sensitive transport names."
+    },
+    {
+      "sector_key": "transport",
+      "display_name_vi": "Vận tải",
+      "enabled": true,
+      "representative_tickers": [
+        "HAH",
+        "GMD",
+        "VSC",
+        "PVT"
+      ],
+      "notes": "General transport / shipping / logistics-sensitive names."
+    },
+    {
+      "sector_key": "plastics",
+      "display_name_vi": "Nhựa",
+      "enabled": true,
+      "representative_tickers": [
+        "BMP",
+        "NTP"
+      ],
+      "notes": "Input-cost-sensitive industrial plastics."
+    },
+    {
+      "sector_key": "steel",
+      "display_name_vi": "Thép",
+      "enabled": true,
+      "representative_tickers": [
+        "HPG",
+        "HSG",
+        "NKG"
+      ],
+      "notes": "Steel and related cyclical materials."
+    },
+    {
+      "sector_key": "chemicals",
+      "display_name_vi": "Hóa chất",
+      "enabled": true,
+      "representative_tickers": [
+        "DGC",
+        "CSV"
+      ],
+      "notes": "Chemical names with commodity linkage."
+    },
+    {
+      "sector_key": "logistics",
+      "display_name_vi": "Logistics",
+      "enabled": true,
+      "representative_tickers": [
+        "GMD",
+        "VSC",
+        "HAH"
+      ],
+      "notes": "Port/logistics flow proxy."
+    },
+    {
+      "sector_key": "ports",
+      "display_name_vi": "Cảng biển",
+      "enabled": true,
+      "representative_tickers": [
+        "GMD",
+        "VSC",
+        "PHP"
+      ],
+      "notes": "Port operators."
+    },
+    {
+      "sector_key": "exporters",
+      "display_name_vi": "Xuất khẩu",
+      "enabled": true,
+      "representative_tickers": [
+        "VHC",
+        "ANV",
+        "TCM",
+        "TNG",
+        "PTB"
+      ],
+      "notes": "Generic export-sensitive basket."
+    },
+    {
+      "sector_key": "textiles",
+      "display_name_vi": "Dệt may",
+      "enabled": true,
+      "representative_tickers": [
+        "TCM",
+        "TNG",
+        "MSH"
+      ],
+      "notes": "Textile/export demand proxy."
+    },
+    {
+      "sector_key": "seafood",
+      "display_name_vi": "Thủy sản",
+      "enabled": true,
+      "representative_tickers": [
+        "VHC",
+        "ANV",
+        "IDI"
+      ],
+      "notes": "Seafood/export demand proxy."
+    },
+    {
+      "sector_key": "wood",
+      "display_name_vi": "Gỗ / nội thất",
+      "enabled": true,
+      "representative_tickers": [
+        "PTB",
+        "GDT"
+      ],
+      "notes": "Wood/furniture export names."
+    },
+    {
+      "sector_key": "real_estate",
+      "display_name_vi": "Bất động sản",
+      "enabled": true,
+      "representative_tickers": [
+        "VHM",
+        "NLG",
+        "KDH",
+        "PDR"
+      ],
+      "notes": "Rate-sensitive property developers."
+    },
+    {
+      "sector_key": "securities",
+      "display_name_vi": "Chứng khoán",
+      "enabled": true,
+      "representative_tickers": [
+        "SSI",
+        "VCI",
+        "HCM",
+        "VND"
+      ],
+      "notes": "Brokerage/liquidity-sensitive names."
+    },
+    {
+      "sector_key": "banking",
+      "display_name_vi": "Ngân hàng",
+      "enabled": true,
+      "representative_tickers": [
+        "MBB",
+        "TCB",
+        "VPB",
+        "ACB",
+        "VCB"
+      ],
+      "notes": "Core financial system/liquidity-sensitive basket."
+    },
+    {
+      "sector_key": "beta_growth",
+      "display_name_vi": "Tăng trưởng beta cao",
+      "enabled": true,
+      "representative_tickers": [
+        "FPT",
+        "DGC",
+        "MWG"
+      ],
+      "notes": "Higher-beta growth names."
+    },
+    {
+      "sector_key": "high_beta",
+      "display_name_vi": "Beta cao",
+      "enabled": true,
+      "representative_tickers": [
+        "FPT",
+        "DGC",
+        "MWG",
+        "SSI",
+        "PDR"
+      ],
+      "notes": "Broader high-beta basket."
+    },
+    {
+      "sector_key": "defensive",
+      "display_name_vi": "Phòng thủ",
+      "enabled": true,
+      "representative_tickers": [
+        "VNM",
+        "QNS",
+        "MCH"
+      ],
+      "notes": "Defensive/consumer staples style basket."
+    },
+    {
+      "sector_key": "utilities",
+      "display_name_vi": "Tiện ích",
+      "enabled": true,
+      "representative_tickers": [
+        "REE",
+        "POW",
+        "NT2"
+      ],
+      "notes": "Utilities / stable cashflow names."
+    },
+    {
+      "sector_key": "industrial_parks",
+      "display_name_vi": "Khu công nghiệp",
+      "enabled": true,
+      "representative_tickers": [
+        "KBC",
+        "SZC",
+        "IDC",
+        "BCM"
+      ],
+      "notes": "FDI / land-lease sensitive names."
+    },
+    {
+      "sector_key": "construction",
+      "display_name_vi": "Xây dựng",
+      "enabled": true,
+      "representative_tickers": [
+        "CTD",
+        "VCG",
+        "HHV"
+      ],
+      "notes": "Construction/infrastructure basket."
+    },
+    {
+      "sector_key": "construction_materials",
+      "display_name_vi": "Vật liệu xây dựng",
+      "enabled": true,
+      "representative_tickers": [
+        "HPG",
+        "KSB",
+        "HT1",
+        "BCC"
+      ],
+      "notes": "Materials linked to infra/property cycles."
+    },
+    {
+      "sector_key": "materials",
+      "display_name_vi": "Vật liệu",
+      "enabled": true,
+      "representative_tickers": [
+        "KSB",
+        "HT1",
+        "BCC"
+      ],
+      "notes": "General material names."
+    },
+    {
+      "sector_key": "gold_jewelry",
+      "display_name_vi": "Vàng / trang sức",
+      "enabled": true,
+      "representative_tickers": [
+        "PNJ"
+      ],
+      "notes": "Gold sentiment proxy."
+    },
+    {
+      "sector_key": "import_sensitive",
+      "display_name_vi": "Nhạy với nhập khẩu",
+      "enabled": true,
+      "representative_tickers": [
+        "BMP",
+        "NTP",
+        "MWG",
+        "HVN",
+        "VJC"
+      ],
+      "notes": "Imported-input and FX-sensitive basket."
+    },
+    {
+      "sector_key": "debt_heavy_usd",
+      "display_name_vi": "Nợ USD cao",
+      "enabled": true,
+      "representative_tickers": [
+        "HVN",
+        "PC1"
+      ],
+      "notes": "Names potentially sensitive to FX revaluation on debt."
+    },
+    {
+      "sector_key": "insurance_deposit_sensitive",
+      "display_name_vi": "Bảo hiểm nhạy lãi suất tiền gửi",
+      "enabled": true,
+      "representative_tickers": [
+        "BVH"
+      ],
+      "notes": "Rate-sensitive insurance allocation proxy."
+    },
+    {
+      "sector_key": "consumers",
+      "display_name_vi": "Tiêu dùng",
+      "enabled": true,
+      "representative_tickers": [
+        "MWG",
+        "DGW",
+        "FRT"
+      ],
+      "notes": "Consumer/distribution names."
+    }
+  ]
+}

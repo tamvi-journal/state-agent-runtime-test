@@ -1,0 +1,101 @@
+{
+  "workflow_name": "stock_candidate_filter",
+  "run_id": "2026-03-29-morning-001",
+  "timestamp": "2026-03-29T01:05:00Z",
+  "status": "success",
+  "data": {
+    "candidate_pool_size": 7,
+    "stock_candidates": [
+      {
+        "ticker": "PVD",
+        "sector": "oil_gas",
+        "sector_state": "ACTIVE",
+        "liquidity_score": 8.4,
+        "rs_score": 81,
+        "price_structure_ok": true,
+        "candidate_reason": [
+          "sector_active",
+          "liquidity_ok",
+          "rs_strong",
+          "structure_intact"
+        ]
+      },
+      {
+        "ticker": "PVS",
+        "sector": "oil_gas",
+        "sector_state": "ACTIVE",
+        "liquidity_score": 8.1,
+        "rs_score": 79,
+        "price_structure_ok": true,
+        "candidate_reason": [
+          "sector_active",
+          "liquidity_ok",
+          "rs_strong"
+        ]
+      },
+      {
+        "ticker": "BSR",
+        "sector": "oil_gas",
+        "sector_state": "ACTIVE",
+        "liquidity_score": 7.8,
+        "rs_score": 76,
+        "price_structure_ok": true,
+        "candidate_reason": [
+          "sector_active",
+          "liquidity_ok",
+          "structure_intact"
+        ]
+      },
+      {
+        "ticker": "DPM",
+        "sector": "fertilizer",
+        "sector_state": "WATCH",
+        "liquidity_score": 7.3,
+        "rs_score": 64,
+        "price_structure_ok": true,
+        "candidate_reason": [
+          "sector_watch",
+          "liquidity_ok",
+          "base_forming"
+        ]
+      },
+      {
+        "ticker": "DCM",
+        "sector": "fertilizer",
+        "sector_state": "WATCH",
+        "liquidity_score": 7.1,
+        "rs_score": 62,
+        "price_structure_ok": true,
+        "candidate_reason": [
+          "sector_watch",
+          "liquidity_ok"
+        ]
+      },
+      {
+        "ticker": "HPG",
+        "sector": "steel",
+        "sector_state": "WATCH",
+        "liquidity_score": 8.8,
+        "rs_score": 66,
+        "price_structure_ok": true,
+        "candidate_reason": [
+          "sector_watch",
+          "liquidity_ok",
+          "rs_improving"
+        ]
+      },
+      {
+        "ticker": "NKG",
+        "sector": "steel",
+        "sector_state": "WATCH",
+        "liquidity_score": 6.5,
+        "rs_score": 60,
+        "price_structure_ok": true,
+        "candidate_reason": [
+          "sector_watch",
+          "liquidity_ok"
+        ]
+      }
+    ]
+  }
+}

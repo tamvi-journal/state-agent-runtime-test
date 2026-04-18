@@ -1,0 +1,21 @@
+{
+  "trade_id": "PVD-2026-03-29-001",
+  "ticker": "PVD",
+  "entry_date": "2026-03-29",
+  "entry_price": 29.3,
+  "position_size": 1,
+  "capital_allocated": 29.3,
+  "invalidation_price": 27.0,
+  "tp1_price": 30.8,
+  "tp2_price": 32.0,
+  "tp3_price": 32.5,
+  "exit_price": null,
+  "status": "OPEN",
+  "realized_pnl": 0.0,
+  "unrealized_pnl": 1.6,
+  "reason_opened": [
+    "sector_active",
+    "breakout_confirmed"
+  ],
+  "reason_closed": []
+}

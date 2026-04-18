@@ -1,0 +1,141 @@
+{
+  "workflow_name": "trade_memo_engine",
+  "run_id": "2026-03-29-memo-001",
+  "timestamp": "2026-03-29T02:02:00Z",
+  "status": "success",
+  "data": {
+    "memo_mode": "lite",
+    "ticker_memos": [
+      {
+        "ticker": "PVD",
+        "sector": "oil_gas",
+        "setup_summary": {
+          "status": "active_setup",
+          "good_points": [
+            "sector_active",
+            "volume_confirmed",
+            "strong_close",
+            "above_ma20_and_ma50"
+          ],
+          "missing_points": [
+            "still_near_short_term_resistance"
+          ],
+          "main_risk": "breakout may fail if follow-through weakens under resistance"
+        },
+        "scenario_table": [
+          {
+            "scenario": "bullish",
+            "probability_pct": 55,
+            "target_zone": "31.0-32.5",
+            "timeline": "2-6 weeks",
+            "triggers": [
+              "hold above breakout zone",
+              "volume stays above average",
+              "sector remains ACTIVE or HOT"
+            ]
+          },
+          {
+            "scenario": "neutral",
+            "probability_pct": 25,
+            "target_zone": "28.3-30.0",
+            "timeline": "2-4 weeks",
+            "triggers": [
+              "price consolidates under resistance",
+              "volume cools down",
+              "market lacks fresh catalyst"
+            ]
+          },
+          {
+            "scenario": "bearish",
+            "probability_pct": 20,
+            "target_zone": "26.8-27.5",
+            "timeline": "1-3 weeks",
+            "triggers": [
+              "lose support zone",
+              "sector weakens",
+              "failed breakout"
+            ]
+          }
+        ],
+        "action_today": {
+          "stance": "watch_or_partial_entry",
+          "reason": "setup is promising but still close to resistance",
+          "next_best_signal": "clean breakout with volume"
+        },
+        "risk_plan": {
+          "invalidation_zone": "below 27.0",
+          "risk_note": [
+            "near resistance",
+            "depends on sector continuation"
+          ]
+        },
+        "plain_text": "TRADE MEMO — PVD\\n\\n1. Setup Summary\\n- Sector: Oil & Gas (ACTIVE)\\n- Why it is interesting: sector active, volume confirmed, strong close\\n- What is missing: still near short-term resistance\\n- Main risk: breakout could fail without follow-through\\n\\n2. Scenario Table\\n- Bullish (55%): 31.0-32.5 in 2-6 weeks if breakout holds and volume stays strong\\n- Neutral (25%): 28.3-30.0 in 2-4 weeks if price consolidates under resistance\\n- Bearish (20%): 26.8-27.5 in 1-3 weeks if support fails and sector weakens\\n\\n3. Action Today\\n- Stance: watch or partial entry\\n- Better signal: clean breakout with volume\\n\\n4. Risk Note\\n- Invalidation: below 27.0\\n- Key risk: near resistance, depends on sector continuation"
+      },
+      {
+        "ticker": "DPM",
+        "sector": "fertilizer",
+        "setup_summary": {
+          "status": "watch_setup",
+          "good_points": [
+            "base_forming",
+            "sector_watch",
+            "structure_not_broken"
+          ],
+          "missing_points": [
+            "needs_volume_confirmation",
+            "still_under_resistance"
+          ],
+          "main_risk": "setup may remain dead money if volume never expands"
+        },
+        "scenario_table": [
+          {
+            "scenario": "bullish",
+            "probability_pct": 40,
+            "target_zone": "38.5-40.0",
+            "timeline": "3-8 weeks",
+            "triggers": [
+              "break above resistance",
+              "volume expands",
+              "sector upgrades from WATCH to ACTIVE"
+            ]
+          },
+          {
+            "scenario": "neutral",
+            "probability_pct": 35,
+            "target_zone": "35.5-37.2",
+            "timeline": "2-5 weeks",
+            "triggers": [
+              "continues sideways base",
+              "volume remains average",
+              "sector stays in WATCH"
+            ]
+          },
+          {
+            "scenario": "bearish",
+            "probability_pct": 25,
+            "target_zone": "33.8-35.0",
+            "timeline": "1-4 weeks",
+            "triggers": [
+              "loses support zone",
+              "sector weakens",
+              "broad market turns risk-off"
+            ]
+          }
+        ],
+        "action_today": {
+          "stance": "watch_only",
+          "reason": "structure is acceptable but confirmation is incomplete",
+          "next_best_signal": "volume-backed break over resistance"
+        },
+        "risk_plan": {
+          "invalidation_zone": "below 35.0",
+          "risk_note": [
+            "still under resistance",
+            "needs sector follow-through"
+          ]
+        },
+        "plain_text": "TRADE MEMO — DPM\\n\\n1. Setup Summary\\n- Sector: Fertilizer (WATCH)\\n- Why it is interesting: constructive base, structure not broken\\n- What is missing: needs volume confirmation, still under resistance\\n- Main risk: setup may stay flat if volume never expands\\n\\n2. Scenario Table\\n- Bullish (40%): 38.5-40.0 in 3-8 weeks if resistance breaks with volume and sector upgrades\\n- Neutral (35%): 35.5-37.2 in 2-5 weeks if base continues sideways\\n- Bearish (25%): 33.8-35.0 in 1-4 weeks if support fails and sector weakens\\n\\n3. Action Today\\n- Stance: watch only\\n- Better signal: volume-backed break over resistance\\n\\n4. Risk Note\\n- Invalidation: below 35.0\\n- Key risk: still under resistance, needs sector follow-through"
+      }
+    ]
+  }
+}

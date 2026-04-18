@@ -1,0 +1,19 @@
+{
+  "workflow_name": "paper_position_manager",
+  "run_id": "2026-04-01-exec-001",
+  "timestamp": "2026-04-01T08:00:00Z",
+  "status": "success",
+  "data": {
+    "trade_id": "PVD-2026-03-29-001",
+    "ticker": "PVD",
+    "status": "PARTIAL_EXIT",
+    "entry_price": 29.3,
+    "current_price": 30.9,
+    "tp1_hit": true,
+    "partial_exit_size": 0.3,
+    "realized_pnl": 0.48,
+    "remaining_size": 0.7,
+    "unrealized_pnl": 1.12,
+    "event_note": "TP1 hit, partial profit taken."
+  }
+}

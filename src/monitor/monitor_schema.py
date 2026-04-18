@@ -6,12 +6,8 @@ from typing import Any
 
 _ALLOWED_INTERVENTIONS = {
     "none",
-    "hold_50_50",
     "ask_clarify",
-    "recheck_context",
-    "recheck_environment",
     "do_not_mark_complete",
-    "reduce_archive_weight",
     "restore_mode",
     "tighten_project_focus",
 }
@@ -21,9 +17,7 @@ _ALLOWED_INTERVENTIONS = {
 class MonitorOutput:
     drift_risk: float = 0.0
     ambiguity_risk: float = 0.0
-    policy_pressure: float = 0.0
     fake_progress_risk: float = 0.0
-    archive_overreach_risk: float = 0.0
     mode_decay_risk: float = 0.0
     recommended_intervention: str = "none"
     notes: str = ""
@@ -35,9 +29,7 @@ class MonitorOutput:
         for field_name in (
             "drift_risk",
             "ambiguity_risk",
-            "policy_pressure",
             "fake_progress_risk",
-            "archive_overreach_risk",
             "mode_decay_risk",
         ):
             value = getattr(self, field_name)

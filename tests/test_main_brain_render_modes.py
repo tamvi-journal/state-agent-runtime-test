@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from core.main_brain import MainBrain
+from brain.main_brain import MainBrain
 from state.live_state import LiveState
 from state.state_manager import StateManager
 from verification.verification_record import VerificationRecord

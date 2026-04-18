@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from core.main_brain import MainBrain
+from brain.main_brain import MainBrain
 from verification.verification_record import VerificationRecord
 
 

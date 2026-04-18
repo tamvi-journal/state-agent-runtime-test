@@ -1,0 +1,53 @@
+{
+  "workflow_name": "execution_sandbox_engine",
+  "run_id": "2026-03-29-exec-001",
+  "timestamp": "2026-03-29T02:30:00Z",
+  "status": "success",
+  "data": {
+    "paper_capital": 50,
+    "risk_profile": "balanced",
+    "max_risk_per_trade_pct": 2.0,
+    "max_concurrent_positions": 3,
+    "candidate_trades": [
+      {
+        "ticker": "PVD",
+        "sector": "oil_gas",
+        "signal_source": "memo",
+        "entry_style": "breakout_confirm",
+        "entry_zone": "29.2-29.4",
+        "invalidation_zone": "below 27.0",
+        "take_profit_levels": [
+          "30.5-31.0",
+          "31.8-32.2",
+          "32.5+"
+        ],
+        "sector_state": "ACTIVE",
+        "trend_quality_score": 8.5,
+        "volume_confirmation_score": 8.0,
+        "setup_readiness_score": 8.7,
+        "final_score": 8.4,
+        "risk_reward_estimate": 1.8,
+        "signal_age_sessions": 0
+      },
+      {
+        "ticker": "DPM",
+        "sector": "fertilizer",
+        "signal_source": "memo",
+        "entry_style": "limit_zone",
+        "entry_zone": "35.6-36.0",
+        "invalidation_zone": "below 35.0",
+        "take_profit_levels": [
+          "37.2",
+          "38.5-39.0"
+        ],
+        "sector_state": "WATCH",
+        "trend_quality_score": 7.2,
+        "volume_confirmation_score": 5.8,
+        "setup_readiness_score": 6.4,
+        "final_score": 6.5,
+        "risk_reward_estimate": 1.2,
+        "signal_age_sessions": 1
+      }
+    ]
+  }
+}

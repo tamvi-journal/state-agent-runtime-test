@@ -1,0 +1,75 @@
+{
+  "workflow_name": "sector_flow_check",
+  "run_id": "2026-03-29-morning-001",
+  "timestamp": "2026-03-29T01:00:00Z",
+  "status": "success",
+  "data": {
+    "market_date": "2026-03-29",
+    "benchmark": {
+      "ticker": "VNINDEX",
+      "change_pct": 0.52
+    },
+    "sector_flow_board": [
+      {
+        "sector": "oil_gas",
+        "state": "ACTIVE",
+        "direction": "positive",
+        "change_pct": 1.84,
+        "volume_ratio_vs_ma20": 1.62,
+        "breadth_score": 8.0,
+        "up_down_ratio": 3.4,
+        "breakout_count": 4,
+        "breakdown_count": 0,
+        "rs_score": 82,
+        "leader_count": 3,
+        "macro_alignment": true,
+        "flags": []
+      },
+      {
+        "sector": "fertilizer",
+        "state": "WATCH",
+        "direction": "positive",
+        "change_pct": 0.74,
+        "volume_ratio_vs_ma20": 0.96,
+        "breadth_score": 5.8,
+        "up_down_ratio": 1.6,
+        "breakout_count": 1,
+        "breakdown_count": 0,
+        "rs_score": 61,
+        "leader_count": 1,
+        "macro_alignment": true,
+        "flags": []
+      },
+      {
+        "sector": "airlines",
+        "state": "WEAKENING",
+        "direction": "negative",
+        "change_pct": -1.12,
+        "volume_ratio_vs_ma20": 1.08,
+        "breadth_score": 4.2,
+        "up_down_ratio": 0.7,
+        "breakout_count": 0,
+        "breakdown_count": 2,
+        "rs_score": 44,
+        "leader_count": 0,
+        "macro_alignment": true,
+        "flags": []
+      },
+      {
+        "sector": "steel",
+        "state": "WATCH",
+        "direction": "positive",
+        "change_pct": 0.95,
+        "volume_ratio_vs_ma20": 1.03,
+        "breadth_score": 6.1,
+        "up_down_ratio": 1.8,
+        "breakout_count": 1,
+        "breakdown_count": 0,
+        "rs_score": 63,
+        "leader_count": 1,
+        "macro_alignment": true,
+        "flags": []
+      }
+    ]
+  }
+}

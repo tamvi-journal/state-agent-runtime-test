@@ -1,245 +1,214 @@
 from __future__ import annotations
 
-from family.execution_gate import ExecutionGate
-from family.execution_types import ApprovalRequest, ExecutionRequest
+from pathlib import Path
+
+from gate.execution_gate import ExecutionGate
+from observability.logger import EventLogger
+from observability.trace_events import TraceEvents
+from tools.market_data_tool import MarketDataTool
+from verification.verification_loop import VerificationLoop
+from workers.candle_volume_structure_worker import CandleVolumeStructureWorker
+from workers.macro_sector_mapping_worker import MacroSectorMappingWorker
+from workers.market_data_worker import MarketDataWorker
+from workers.sector_flow_worker import SectorFlowWorker
+from workers.technical_analysis_worker import TechnicalAnalysisWorker
+from workers.trade_memo_worker import TradeMemoWorker
 
 
-def _request(**overrides) -> ExecutionRequest:
-    payload = {
-        "action_type": "inspect",
-        "target_type": "repo_metadata",
-        "target_path_or_ref": "README.md",
-        "requested_zone": "inspection",
-        "writes_state": False,
-        "executes_code": False,
-        "network_required": False,
-        "package_install_required": False,
-        "secret_access_required": False,
-        "source_trust_stage": "reviewed",
-        "requested_operation": "inspect_metadata",
-        "target_scope": "repo_local",
-        "mutation_depth": "none",
-        "zone_preference": "inspection",
-        "why_not_host_if_applicable": "host is unnecessary for read-only metadata inspection",
-        "reason": "inspect the repository metadata",
-    }
-    payload.update(overrides)
-    return ExecutionRequest(**payload)
-
-
-def test_low_risk_metadata_inspection_allows_inspection() -> None:
-    gate = ExecutionGate()
-    decision = gate.assess(_request())
-
-    assert decision.decision == "allow"
-    assert decision.recommended_zone == "inspection"
-    assert decision.requires_approval is False
-    assert decision.requested_operation == "inspect_metadata"
-
-
-def test_deeper_content_parsing_prefers_sandbox_not_host() -> None:
-    gate = ExecutionGate()
-    decision = gate.assess(
-        _request(
-            action_type="parse_payload",
-            target_type="structured_payload",
-            target_path_or_ref="generated_output.json",
-            requested_zone="sandbox",
-            source_trust_stage="unknown",
-            requested_operation="parse_in_sandbox",
-            target_scope="temp_artifact",
-            zone_preference="sandbox",
-            why_not_host_if_applicable="sandbox contains deeper parsing without granting host execution or mutation",
-            reason="parse generated output safely",
-        )
+def _write_csv(path: Path) -> None:
+    path.write_text(
+        "date,ticker,open,high,low,close,volume\n"
+        "2026-04-08,MBB,24.6,24.9,24.4,24.8,14500000\n"
+        "2026-04-09,MBB,24.8,25.0,24.7,24.9,16200000\n"
+        "2026-04-10,MBB,24.8,25.2,24.6,25.1,18450200\n",
+        encoding="utf-8",
     )
 
-    assert decision.decision == "allow"
-    assert decision.recommended_zone == "sandbox"
 
-
-def test_package_install_is_not_auto_allowed() -> None:
-    gate = ExecutionGate()
-    decision = gate.assess(
-        _request(
-            action_type="install",
-            target_type="package",
-            target_path_or_ref="pytest",
-            requested_zone="host",
-            package_install_required=True,
-            requested_operation="install_dependency",
-            target_scope="unknown",
-            mutation_depth="none",
-            zone_preference="host",
-            reason="install a dependency",
-        )
+def _build_gate(csv_path: Path) -> ExecutionGate:
+    return ExecutionGate(
+        market_data_worker=MarketDataWorker(market_data_tool=MarketDataTool(data_path=csv_path)),
+        technical_analysis_worker=TechnicalAnalysisWorker(market_data_tool=MarketDataTool(data_path=csv_path)),
+        macro_sector_mapping_worker=MacroSectorMappingWorker(),
+        sector_flow_worker=SectorFlowWorker(),
+        candle_volume_structure_worker=CandleVolumeStructureWorker(),
+        trade_memo_worker=TradeMemoWorker(),
+        verification_loop=VerificationLoop(),
+        trace_events=TraceEvents(logger=EventLogger()),
     )
 
-    assert decision.decision in {"require_approval", "deny"}
+
+def test_market_data_lookup_is_sandbox_only(tmp_path: Path) -> None:
+    csv_path = tmp_path / "sample_market_data.csv"
+    _write_csv(csv_path)
+
+    gate = _build_gate(csv_path)
+    decision = gate.decide(action_name="market_data_lookup")
+
+    assert decision.decision == "sandbox_only"
+    assert "bounded harness surface" in decision.reason
 
 
-def test_host_write_requires_approval() -> None:
-    gate = ExecutionGate()
-    decision = gate.assess(
-        _request(
-            action_type="write_file",
-            target_type="repo_file",
-            target_path_or_ref="src/example.py",
-            requested_zone="host",
-            writes_state=True,
-            requested_operation="mutate_repo",
-            target_scope="repo_local",
-            mutation_depth="host_mutation",
-            zone_preference="host",
-            reason="write a repository file",
-        )
+def test_mutating_actions_need_approval(tmp_path: Path) -> None:
+    csv_path = tmp_path / "sample_market_data.csv"
+    _write_csv(csv_path)
+
+    gate = _build_gate(csv_path)
+
+    assert gate.decide(action_name="write_file").decision == "needs_approval"
+    assert gate.decide(action_name="network_access").decision == "needs_approval"
+
+
+def test_unsupported_actions_are_denied(tmp_path: Path) -> None:
+    csv_path = tmp_path / "sample_market_data.csv"
+    _write_csv(csv_path)
+
+    gate = _build_gate(csv_path)
+    decision = gate.decide(action_name="archive_replay")
+
+    assert decision.decision == "deny"
+
+
+def test_gate_executes_market_data_and_returns_verification(tmp_path: Path) -> None:
+    csv_path = tmp_path / "sample_market_data.csv"
+    _write_csv(csv_path)
+
+    gate = _build_gate(csv_path)
+    decision, payload, record = gate.run_market_data_flow(ticker="MBB", timeframe="1D")
+
+    assert decision.decision == "sandbox_only"
+    assert payload is not None
+    assert record is not None
+    assert payload["result"]["bars_found"] == 3
+    assert record.verification_status == "passed"
+    assert "market_data_tool.load_market_data" in record.executed_action
+
+
+def test_verification_fails_when_ticker_is_missing(tmp_path: Path) -> None:
+    csv_path = tmp_path / "sample_market_data.csv"
+    _write_csv(csv_path)
+
+    gate = _build_gate(csv_path)
+    _, payload, record = gate.run_market_data_flow(ticker="VCB", timeframe="1D")
+
+    assert payload is not None
+    assert payload["result"]["bars_found"] == 0
+    assert record is not None
+    assert record.verification_status == "failed"
+
+
+def test_gate_executes_sector_flow_and_returns_verification(tmp_path: Path) -> None:
+    csv_path = tmp_path / "sample_market_data.csv"
+    _write_csv(csv_path)
+
+    gate = _build_gate(csv_path)
+    decision, payload, record = gate.run_sector_flow(
+        sector_flow_payload={
+            "data": {
+                "benchmark": {"ticker": "VNINDEX", "change_pct": 0.52},
+                "sector_metrics": [
+                    {
+                        "sector": "oil_gas",
+                        "rs_score": 82,
+                        "volume_ratio_vs_ma20": 1.62,
+                        "breadth_score": 8.0,
+                        "up_down_ratio": 3.4,
+                        "breakout_count": 4,
+                        "breakdown_count": 0,
+                        "leader_count": 3,
+                        "macro_alignment": True,
+                    }
+                ],
+            }
+        }
     )
 
-    assert decision.decision == "require_approval"
-    assert decision.requires_approval is True
+    assert decision.decision == "sandbox_only"
+    assert payload is not None
+    assert record is not None
+    assert payload["result"]["sector_flow_board"][0]["state"] == "HOT"
+    assert record.verification_status == "passed"
+    assert "sector_flow_worker.run" in record.executed_action
 
 
-def test_propose_patch_does_not_look_like_host_mutation_success() -> None:
-    gate = ExecutionGate()
-    decision = gate.assess(
-        _request(
-            action_type="propose_patch",
-            target_type="repo_file",
-            target_path_or_ref="src/example.py",
-            requested_zone="sandbox",
-            writes_state=True,
-            requested_operation="propose_patch",
-            target_scope="repo_local",
-            mutation_depth="proposal_only",
-            zone_preference="sandbox",
-            why_not_host_if_applicable="sandbox keeps proposed or bounded transforms away from host mutation",
-            reason="propose a bounded patch",
-        )
+def test_gate_executes_candle_volume_structure_and_returns_verification(tmp_path: Path) -> None:
+    csv_path = tmp_path / "sample_market_data.csv"
+    _write_csv(csv_path)
+
+    gate = _build_gate(csv_path)
+    decision, payload, record = gate.run_candle_volume_structure(
+        candidate_payload={
+            "data": {
+                "stock_candidates": [
+                    {
+                        "ticker": "PVD",
+                        "sector": "oil_gas",
+                        "sector_state": "ACTIVE",
+                        "avg_trading_value_20d_bil_vnd": 18.0,
+                        "avg_volume_20d": 1200000,
+                        "rs_score": 81,
+                        "price_structure_ok": True,
+                        "warning_status": "normal",
+                        "close_below_ma50_pct": 1.0,
+                        "breakdown_confirmed": False,
+                        "distance_to_recent_support_pct": 4.0,
+                        "support_status": "safe",
+                        "candidate_reason": ["sector_active", "rs_strong", "structure_intact"],
+                        "ohlcv_context": {
+                            "setup_type": "base_breakout",
+                            "location_type": "above_support",
+                            "candle_signal": "bullish_momentum",
+                            "close_quality": "strong_close_near_high",
+                            "volume_signal": "expanded_confirmed",
+                            "base_quality": "tight_base",
+                            "retest_quality": "not_required",
+                            "volume_vs_ma20": 1.45,
+                        },
+                    }
+                ]
+            }
+        }
     )
 
-    assert decision.decision == "require_approval"
-    assert decision.mutation_depth == "proposal_only"
-    assert decision.recommended_zone == "sandbox"
+    assert decision.decision == "sandbox_only"
+    assert payload is not None
+    assert record is not None
+    assert payload["result"]["top_list"][0]["ticker"] == "PVD"
+    assert record.verification_status == "passed"
+    assert "candle_volume_structure_worker.run" in record.executed_action
 
 
-def test_run_shell_with_unknown_trust_does_not_auto_allow() -> None:
-    gate = ExecutionGate()
-    decision = gate.assess(
-        _request(
-            action_type="execute_payload",
-            target_type="script",
-            target_path_or_ref="generated_script.py",
-            requested_zone="host",
-            executes_code=True,
-            source_trust_stage="unknown",
-            requested_operation="run_shell",
-            target_scope="repo_local",
-            mutation_depth="none",
-            zone_preference="host",
-            reason="run generated code",
-        )
+def test_gate_executes_trade_memo_and_returns_verification(tmp_path: Path) -> None:
+    csv_path = tmp_path / "sample_market_data.csv"
+    _write_csv(csv_path)
+
+    gate = _build_gate(csv_path)
+    decision, payload, record = gate.run_trade_memo(
+        memo_payload={
+            "data": {
+                "memo_mode": "lite",
+                "ticker_inputs": [
+                    {
+                        "ticker": "PVD",
+                        "sector": "oil_gas",
+                        "sector_state": "ACTIVE",
+                        "current_price": 28.7,
+                        "trend_quality_score": 8.5,
+                        "volume_confirmation_score": 8.0,
+                        "setup_readiness_score": 8.7,
+                        "why_in": ["strong_close", "volume_expansion", "sector_active"],
+                        "risk_note": ["near_short_term_resistance"],
+                        "support_zone": "27.6-28.0",
+                        "resistance_zone": "29.2-29.8",
+                    }
+                ],
+            }
+        }
     )
 
-    assert decision.decision != "allow"
-
-
-def test_approval_object_defaults_to_false() -> None:
-    approval = ApprovalRequest(
-        requested_action="write_file:repo_file:src/example.py",
-        why_needed="mutation requested",
-        risk_summary="state mutation requires approval",
-        sandbox_alternative_available=True,
-        why_host_not_sandbox="host mutation is not least-privilege here",
-    )
-
-    assert approval.approved is False
-
-
-def test_output_remains_compact_and_auditable() -> None:
-    gate = ExecutionGate()
-    exported = gate.export_decision(gate.assess(_request()))
-
-    assert set(exported.keys()) == {
-        "decision",
-        "recommended_zone",
-        "requires_approval",
-        "risk_summary",
-        "reason",
-        "requested_operation",
-        "target_scope",
-        "target_trust",
-        "mutation_depth",
-    }
-
-
-def test_no_sleep_logic_is_introduced() -> None:
-    gate = ExecutionGate()
-    exported = gate.export_decision(gate.assess(_request()))
-
-    assert "sleep_state" not in exported
-    assert "wake_state" not in exported
-
-
-def test_no_actual_execution_side_effect_fields_are_introduced() -> None:
-    gate = ExecutionGate()
-    exported = gate.export_decision(
-        gate.assess(
-            _request(
-                action_type="shell_execute",
-                target_type="command",
-                target_path_or_ref="echo hi",
-                executes_code=True,
-                source_trust_stage="unknown",
-                requested_operation="run_shell",
-                target_scope="repo_local",
-                mutation_depth="none",
-                zone_preference="host",
-                reason="attempt execution",
-            )
-        )
-    )
-
-    assert "executed" not in exported
-    assert "filesystem_mutation" not in exported
-    assert "network_session" not in exported
-
-
-def test_secret_access_is_not_auto_allowed() -> None:
-    gate = ExecutionGate()
-    decision = gate.assess(
-        _request(
-            action_type="secret_access",
-            target_type="secret_ref",
-            target_path_or_ref="OPENAI_API_KEY",
-            requested_zone="host",
-            secret_access_required=True,
-            requested_operation="access_secret",
-            target_scope="unknown",
-            mutation_depth="none",
-            zone_preference="host",
-            reason="read a secret",
-        )
-    )
-
-    assert decision.decision in {"require_approval", "deny"}
-
-
-def test_external_untrusted_network_access_does_not_auto_allow() -> None:
-    gate = ExecutionGate()
-    decision = gate.assess(
-        _request(
-            action_type="network_access",
-            target_type="remote_ref",
-            target_path_or_ref="https://untrusted.example/api",
-            requested_zone="host",
-            network_required=True,
-            source_trust_stage="untrusted",
-            requested_operation="access_network",
-            target_scope="external_destination",
-            mutation_depth="none",
-            zone_preference="host",
-            reason="fetch remote content",
-        )
-    )
-
-    assert decision.decision != "allow"
+    assert decision.decision == "sandbox_only"
+    assert payload is not None
+    assert record is not None
+    assert payload["result"]["ticker_memos"][0]["ticker"] == "PVD"
+    assert record.verification_status == "passed"
+    assert "trade_memo_worker.run" in record.executed_action

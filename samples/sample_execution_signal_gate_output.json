@@ -1,0 +1,35 @@
+{
+  "workflow_name": "execution_signal_gate",
+  "run_id": "2026-03-29-exec-001",
+  "timestamp": "2026-03-29T02:31:00Z",
+  "status": "success",
+  "data": {
+    "paper_capital": 50,
+    "allowed_trades": [
+      {
+        "ticker": "PVD",
+        "allowed_to_trade": true,
+        "reason": [
+          "final_score_ok",
+          "sector_active",
+          "risk_reward_ok",
+          "fresh_signal",
+          "invalidation_defined"
+        ],
+        "entry_style": "breakout_confirm",
+        "entry_zone": "29.2-29.4"
+      }
+    ],
+    "rejected_trades": [
+      {
+        "ticker": "DPM",
+        "allowed_to_trade": false,
+        "reason": [
+          "sector_not_active",
+          "risk_reward_too_low",
+          "final_score_below_threshold"
+        ]
+      }
+    ]
+  }
+}

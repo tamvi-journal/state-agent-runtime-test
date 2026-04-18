@@ -1,0 +1,84 @@
+{
+  "version": "v1",
+  "description": "Hard pre-filters before candle/volume structure scoring. Used to remove obvious junk and reduce noise.",
+  "rules": {
+    "minimum_liquidity": {
+      "enabled": true,
+      "metric": "avg_trading_value_20d_bil_vnd",
+      "operator": ">=",
+      "threshold": 15,
+      "notes": "Tune up or down later depending on universe size."
+    },
+    "minimum_price": {
+      "enabled": false,
+      "metric": "close_price",
+      "operator": ">=",
+      "threshold": 5,
+      "notes": "Optional. Leave off at first unless penny names pollute output."
+    },
+    "minimum_rs_score": {
+      "enabled": true,
+      "metric": "rs_score",
+      "operator": ">=",
+      "threshold": 55,
+      "notes": "Basic relative strength floor before full scoring."
+    },
+    "exclude_warning_status": {
+      "enabled": true,
+      "field": "warning_status",
+      "exclude_if_in": [
+        "warning",
+        "special_control",
+        "trading_restriction",
+        "suspension"
+      ],
+      "notes": "Exclude names with exchange warning or trading restrictions."
+    },
+    "exclude_extreme_illiquid": {
+      "enabled": true,
+      "metric": "avg_volume_20d",
+      "operator": ">=",
+      "threshold": 100000,
+      "notes": "Basic floor to eliminate dead charts."
+    },
+    "exclude_recent_major_breakdown": {
+      "enabled": true,
+      "conditions": {
+        "close_below_ma50_pct": -5,
+        "lookback_days": 10,
+        "breakdown_confirmed": true
+      },
+      "notes": "Avoid names with recently confirmed structure loss."
+    },
+    "exclude_near_breakdown_zone": {
+      "enabled": true,
+      "conditions": {
+        "distance_to_recent_support_pct": 1.5,
+        "support_status": "at_risk"
+      },
+      "notes": "Avoid names sitting too close to obvious breakdown risk unless manually overridden."
+    },
+    "sector_state_allowed": {
+      "enabled": true,
+      "allowed_states": [
+        "WATCH",
+        "ACTIVE",
+        "HOT"
+      ],
+      "notes": "Only pass candidates from sectors worth attention."
+    },
+    "exclude_gap_damage": {
+      "enabled": false,
+      "conditions": {
+        "recent_gap_down_pct": -6,
+        "lookback_days": 5
+      },
+      "notes": "Optional filter for damaged charts after sharp downside gaps."
+    },
+    "manual_exclusion_list": {
+      "enabled": true,
+      "tickers": [],
+      "notes": "Ty can add specific names here if needed."
+    }
+  }
+}

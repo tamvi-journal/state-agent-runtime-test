@@ -1,0 +1,38 @@
+{
+  "workflow_name": "report_builder",
+  "run_id": "2026-03-29-morning-001",
+  "timestamp": "2026-03-29T01:15:00Z",
+  "status": "success",
+  "data": {
+    "report_type": "morning_report",
+    "title": "TY MARKET RADAR — Morning",
+    "sections": {
+      "global_pulse": [
+        "Oil up on Middle East tension",
+        "USD firm after hawkish Fed remarks",
+        "China stimulus tone remains supportive"
+      ],
+      "vn_sector_impact": [
+        "Oil & Gas: Positive",
+        "Fertilizer: Watch positive",
+        "Airlines: Negative",
+        "Steel: Watch positive"
+      ],
+      "sector_flow": [
+        "Oil & Gas: ACTIVE",
+        "Fertilizer: WATCH",
+        "Steel: WATCH",
+        "Airlines: WEAKENING"
+      ],
+      "top_list": [
+        "PVD",
+        "PVS"
+      ],
+      "watch_list": [
+        "DPM",
+        "HPG"
+      ]
+    },
+    "plain_text": "TY MARKET RADAR — Morning\n\n1. Global pulse\n- Oil up on Middle East tension\n- USD firm after hawkish Fed remarks\n- China stimulus tone remains supportive\n\n2. VN sector impact\n- Oil & Gas: Positive\n- Fertilizer: Watch positive\n- Airlines: Negative\n- Steel: Watch positive\n\n3. Sector flow\n- Oil & Gas: ACTIVE\n- Fertilizer: WATCH\n- Steel: WATCH\n- Airlines: WEAKENING\n\n4. Top List\n- PVD\n- PVS\n\n5. Watch List\n- DPM\n- HPG"
+  }
+}

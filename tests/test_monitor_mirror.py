@@ -1,108 +1,90 @@
 from __future__ import annotations
 
-from family.mirror_bridge import MirrorBridge
-from family.monitor_layer import MonitorLayer
+from monitor.mirror_bridge import MirrorBridge
+from monitor.monitor_layer import MonitorLayer
 
 
 def test_pre_action_ambiguity_case_compresses_to_ambiguity() -> None:
     monitor = MonitorLayer()
     bridge = MirrorBridge()
 
-    output = monitor.pre_action_monitor(
-        active_mode="build",
-        task_type="architecture",
-        context_view={"task_focus": "", "current_execution_boundary": ""},
+    output = monitor.evaluate(
+        context_view={"active_project": "thin-runtime-harness", "task_focus": ""},
+        live_state={"active_mode": "build"},
+        delta_log={"policy_intrusion_detected": False, "repair_event": False},
+        current_message="Continue that.",
         draft_response="We should continue.",
+        action_status={"verification_status": "pending", "observed_outcome": ""},
         archive_status={"archive_consulted": False, "fragments_used": 0},
     )
-    summary = bridge.build_mirror_summary(
+    summary = bridge.reflect(
         monitor_output=output,
         active_mode="build",
         task_type="architecture",
-        phase="pre_action",
-    )
+        action_phase="pre_action",
+    )["monitor_summary"]
 
-    assert summary.primary_risk == "ambiguity"
+    assert summary["primary_risk"] == "ambiguity"
 
 
 def test_post_action_fake_progress_case_compresses_to_fake_progress() -> None:
     monitor = MonitorLayer()
     bridge = MirrorBridge()
 
-    output = monitor.post_action_monitor(
-        active_mode="execute",
-        task_type="execution",
-        context_view={"task_focus": "apply change"},
+    output = monitor.evaluate(
+        context_view={"active_project": "thin-runtime-harness", "task_focus": "apply change"},
+        live_state={"active_mode": "build"},
+        delta_log={"policy_intrusion_detected": False, "repair_event": False},
+        current_message="Apply the change.",
         draft_response="Done successfully.",
-        action_status={"observed_outcome": ""},
-        verification_status={"status": "pending"},
+        action_status={"verification_status": "pending", "observed_outcome": ""},
         archive_status={"archive_consulted": False, "fragments_used": 0},
     )
-    summary = bridge.build_mirror_summary(
+    summary = bridge.reflect(
         monitor_output=output,
-        active_mode="execute",
+        active_mode="build",
         task_type="execution",
-        phase="post_action",
-    )
+        action_phase="post_action",
+    )["monitor_summary"]
 
-    assert summary.primary_risk == "fake_progress"
+    assert summary["primary_risk"] == "fake_progress"
 
 
 def test_mode_decay_case_recommends_restore_mode() -> None:
     monitor = MonitorLayer()
 
-    output = monitor.pre_action_monitor(
-        active_mode="build",
-        task_type="research",
-        context_view={"task_focus": "schema work", "current_execution_boundary": "stay in design space"},
+    output = monitor.evaluate(
+        context_view={"active_project": "thin-runtime-harness", "task_focus": "schema work"},
+        live_state={"active_mode": "build"},
+        delta_log={"policy_intrusion_detected": False, "repair_event": False},
+        current_message="Continue the build path.",
         draft_response="This feels warm and gentle and caring.",
+        action_status={"verification_status": "pending", "observed_outcome": ""},
         archive_status={"archive_consulted": False, "fragments_used": 0},
     )
 
     assert output.recommended_intervention == "restore_mode"
 
 
-def test_archive_overreach_is_not_top_risk_when_fake_progress_is_present() -> None:
-    monitor = MonitorLayer()
-    bridge = MirrorBridge()
-
-    output = monitor.post_action_monitor(
-        active_mode="execute",
-        task_type="execution",
-        context_view={"task_focus": "write result"},
-        draft_response="Completed successfully.",
-        action_status={"observed_outcome": ""},
-        verification_status={"status": "pending"},
-        archive_status={"archive_consulted": True, "fragments_used": 6},
-    )
-    summary = bridge.build_mirror_summary(
-        monitor_output=output,
-        active_mode="execute",
-        task_type="execution",
-        phase="post_action",
-    )
-
-    assert output.archive_overreach_risk > 0.0
-    assert summary.primary_risk == "fake_progress"
-
-
 def test_mirror_summary_remains_compact_and_excludes_full_monitor_object() -> None:
     monitor = MonitorLayer()
     bridge = MirrorBridge()
 
-    output = monitor.pre_action_monitor(
-        active_mode="build",
-        task_type="architecture",
-        context_view={"task_focus": "", "current_execution_boundary": ""},
+    output = monitor.evaluate(
+        context_view={"active_project": "thin-runtime-harness", "task_focus": ""},
+        live_state={"active_mode": "build"},
+        delta_log={"policy_intrusion_detected": False, "repair_event": False},
+        current_message="Continue that.",
         draft_response="We should continue.",
+        action_status={"verification_status": "pending", "observed_outcome": ""},
         archive_status={"archive_consulted": False, "fragments_used": 0},
     )
-    summary = bridge.build_mirror_summary(
+    summary = bridge.reflect(
         monitor_output=output,
         active_mode="build",
         task_type="architecture",
-        phase="pre_action",
-    ).to_dict()
+        action_phase="pre_action",
+    )["monitor_summary"]
 
     assert set(summary.keys()) == {
         "primary_risk",
@@ -116,11 +98,13 @@ def test_mirror_summary_remains_compact_and_excludes_full_monitor_object() -> No
 
 def test_no_sleep_lifecycle_logic_is_introduced() -> None:
     monitor = MonitorLayer()
-    output = monitor.pre_action_monitor(
-        active_mode="build",
-        task_type="research",
-        context_view={"task_focus": "schema", "current_execution_boundary": "stay local"},
+    output = monitor.evaluate(
+        context_view={"active_project": "thin-runtime-harness", "task_focus": "schema"},
+        live_state={"active_mode": "build"},
+        delta_log={"policy_intrusion_detected": False, "repair_event": False},
+        current_message="schema work only",
         draft_response="schema work only",
+        action_status={"verification_status": "pending", "observed_outcome": ""},
         archive_status={"archive_consulted": False, "fragments_used": 0},
     ).to_dict()
 
@@ -130,13 +114,13 @@ def test_no_sleep_lifecycle_logic_is_introduced() -> None:
 
 def test_monitor_canary_does_not_expand_into_router_authority() -> None:
     monitor = MonitorLayer()
-    output = monitor.post_action_monitor(
-        active_mode="execute",
-        task_type="execution",
-        context_view={"task_focus": "apply"},
+    output = monitor.evaluate(
+        context_view={"active_project": "thin-runtime-harness", "task_focus": "apply"},
+        live_state={"active_mode": "build"},
+        delta_log={"policy_intrusion_detected": False, "repair_event": False},
+        current_message="Apply it.",
         draft_response="Done successfully.",
-        action_status={"observed_outcome": ""},
-        verification_status={"status": "pending"},
+        action_status={"verification_status": "pending", "observed_outcome": ""},
         archive_status={"archive_consulted": False, "fragments_used": 0},
     ).to_dict()
 

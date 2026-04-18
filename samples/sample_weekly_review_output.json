@@ -1,0 +1,29 @@
+{
+  "workflow_name": "weekly_review_engine",
+  "run_id": "2026-03-29-weekly-001",
+  "timestamp": "2026-03-29T08:00:00Z",
+  "status": "success",
+  "data": {
+    "week_range": "2026-03-23 to 2026-03-27",
+    "top_sectors": [
+      "oil_gas",
+      "fertilizer"
+    ],
+    "emerging_sectors": [
+      "steel"
+    ],
+    "weakening_sectors": [
+      "airlines"
+    ],
+    "stocks_holding_structure": [
+      "PVD",
+      "PVS",
+      "DPM"
+    ],
+    "stocks_losing_momentum": [
+      "HVN",
+      "VJC"
+    ],
+    "plain_text": "WEEKLY REVIEW\n\nTop sectors:\n- Oil & Gas\n- Fertilizer\n\nEmerging:\n- Steel\n\nWeakening:\n- Airlines\n\nStocks holding structure:\n- PVD, PVS, DPM\n\nStocks losing momentum:\n- HVN, VJC"
+  }
+}

@@ -1,0 +1,771 @@
+{
+  "hormuz_risk": {
+    "trigger_key": "hormuz_risk",
+    "vn_sectors_positive": [
+      "oil_gas",
+      "fertilizer"
+    ],
+    "vn_sectors_negative": [
+      "airlines",
+      "transport",
+      "plastics"
+    ],
+    "watch_stocks": {
+      "oil_gas": [
+        "PVD",
+        "PVS",
+        "BSR",
+        "OIL"
+      ],
+      "fertilizer": [
+        "DPM",
+        "DCM",
+        "LAS",
+        "DDV"
+      ],
+      "airlines": [
+        "HVN",
+        "VJC"
+      ],
+      "transport": [
+        "HAH",
+        "GMD",
+        "VSC"
+      ],
+      "plastics": [
+        "BMP",
+        "NTP"
+      ]
+    },
+    "confidence": "high",
+    "decay_days": 3,
+    "notes": "Supply-route risk usually pushes oil higher quickly. Upstream/refining and fertilizer may benefit; fuel-sensitive sectors face cost pressure."
+  },
+  "oil_up": {
+    "trigger_key": "oil_up",
+    "vn_sectors_positive": [
+      "oil_gas",
+      "fertilizer"
+    ],
+    "vn_sectors_negative": [
+      "airlines",
+      "transport",
+      "plastics"
+    ],
+    "watch_stocks": {
+      "oil_gas": [
+        "PVD",
+        "PVS",
+        "BSR",
+        "OIL"
+      ],
+      "fertilizer": [
+        "DPM",
+        "DCM",
+        "LAS",
+        "DDV"
+      ],
+      "airlines": [
+        "HVN",
+        "VJC"
+      ],
+      "transport": [
+        "HAH",
+        "GMD",
+        "VSC"
+      ],
+      "plastics": [
+        "BMP",
+        "NTP"
+      ]
+    },
+    "confidence": "medium",
+    "decay_days": 3,
+    "notes": "Higher oil can support energy-related names but pressure fuel and input-cost-sensitive sectors."
+  },
+  "oil_down": {
+    "trigger_key": "oil_down",
+    "vn_sectors_positive": [
+      "airlines",
+      "transport",
+      "plastics"
+    ],
+    "vn_sectors_negative": [
+      "oil_gas",
+      "fertilizer"
+    ],
+    "watch_stocks": {
+      "airlines": [
+        "HVN",
+        "VJC"
+      ],
+      "transport": [
+        "HAH",
+        "GMD",
+        "VSC"
+      ],
+      "plastics": [
+        "BMP",
+        "NTP"
+      ],
+      "oil_gas": [
+        "PVD",
+        "PVS",
+        "BSR",
+        "OIL"
+      ],
+      "fertilizer": [
+        "DPM",
+        "DCM",
+        "LAS",
+        "DDV"
+      ]
+    },
+    "confidence": "medium",
+    "decay_days": 3,
+    "notes": "Lower oil eases cost pressure for downstream users but can reduce support for energy and fertilizer narratives."
+  },
+  "china_stimulus": {
+    "trigger_key": "china_stimulus",
+    "vn_sectors_positive": [
+      "steel",
+      "chemicals",
+      "logistics",
+      "ports"
+    ],
+    "vn_sectors_negative": [],
+    "watch_stocks": {
+      "steel": [
+        "HPG",
+        "HSG",
+        "NKG"
+      ],
+      "chemicals": [
+        "DGC",
+        "CSV"
+      ],
+      "logistics": [
+        "HAH",
+        "GMD",
+        "VSC"
+      ],
+      "ports": [
+        "GMD",
+        "VSC",
+        "PHP"
+      ]
+    },
+    "confidence": "medium",
+    "decay_days": 7,
+    "notes": "Chinese stimulus can improve commodity demand, industrial activity, and shipping sentiment across related VN sectors."
+  },
+  "usd_strength": {
+    "trigger_key": "usd_strength",
+    "vn_sectors_positive": [
+      "exporters",
+      "textiles",
+      "seafood",
+      "wood"
+    ],
+    "vn_sectors_negative": [
+      "real_estate",
+      "securities",
+      "import_sensitive"
+    ],
+    "watch_stocks": {
+      "exporters": [
+        "VHC",
+        "ANV",
+        "TCM",
+        "TNG",
+        "PTB"
+      ],
+      "textiles": [
+        "TCM",
+        "TNG",
+        "MSH"
+      ],
+      "seafood": [
+        "VHC",
+        "ANV",
+        "IDI"
+      ],
+      "wood": [
+        "PTB",
+        "GDT"
+      ],
+      "real_estate": [
+        "VHM",
+        "NVL",
+        "PDR"
+      ],
+      "securities": [
+        "SSI",
+        "VCI",
+        "HCM",
+        "VND"
+      ],
+      "import_sensitive": [
+        "HVN",
+        "VJC",
+        "BMP"
+      ]
+    },
+    "confidence": "medium",
+    "decay_days": 5,
+    "notes": "A stronger USD can help exporters on translation and competitiveness, while tightening liquidity and pressuring imported-input sectors."
+  },
+  "fed_dovish": {
+    "trigger_key": "fed_dovish",
+    "vn_sectors_positive": [
+      "securities",
+      "banking",
+      "real_estate",
+      "beta_growth"
+    ],
+    "vn_sectors_negative": [],
+    "watch_stocks": {
+      "securities": [
+        "SSI",
+        "VCI",
+        "HCM",
+        "VND"
+      ],
+      "banking": [
+        "MBB",
+        "TCB",
+        "VPB",
+        "ACB"
+      ],
+      "real_estate": [
+        "VHM",
+        "NLG",
+        "KDH",
+        "PDR"
+      ],
+      "beta_growth": [
+        "FPT",
+        "DGC",
+        "MWG"
+      ]
+    },
+    "confidence": "medium",
+    "decay_days": 10,
+    "notes": "Dovish global rates usually help risk appetite, valuation multiples, and liquidity-sensitive sectors."
+  },
+  "fed_hawkish": {
+    "trigger_key": "fed_hawkish",
+    "vn_sectors_positive": [
+      "defensive",
+      "utilities"
+    ],
+    "vn_sectors_negative": [
+      "securities",
+      "real_estate",
+      "beta_growth"
+    ],
+    "watch_stocks": {
+      "defensive": [
+        "VNM",
+        "QNS",
+        "MCH"
+      ],
+      "utilities": [
+        "POW",
+        "NT2",
+        "REE"
+      ],
+      "securities": [
+        "SSI",
+        "VCI",
+        "HCM",
+        "VND"
+      ],
+      "real_estate": [
+        "VHM",
+        "NLG",
+        "KDH",
+        "PDR"
+      ],
+      "beta_growth": [
+        "FPT",
+        "DGC",
+        "MWG"
+      ]
+    },
+    "confidence": "medium",
+    "decay_days": 10,
+    "notes": "Hawkish rates can compress valuations and hurt risk appetite, while defensive cashflow sectors may hold up better."
+  },
+  "commodity_up": {
+    "trigger_key": "commodity_up",
+    "vn_sectors_positive": [
+      "oil_gas",
+      "fertilizer",
+      "steel",
+      "chemicals"
+    ],
+    "vn_sectors_negative": [
+      "input_cost_sensitive"
+    ],
+    "watch_stocks": {
+      "oil_gas": [
+        "PVD",
+        "PVS",
+        "BSR"
+      ],
+      "fertilizer": [
+        "DPM",
+        "DCM",
+        "LAS",
+        "DDV"
+      ],
+      "steel": [
+        "HPG",
+        "HSG",
+        "NKG"
+      ],
+      "chemicals": [
+        "DGC",
+        "CSV"
+      ],
+      "input_cost_sensitive": [
+        "VJC",
+        "HVN",
+        "BMP"
+      ]
+    },
+    "confidence": "medium",
+    "decay_days": 5,
+    "notes": "Broad commodity strength can support upstream producers but pressure margin-sensitive downstream users."
+  },
+  "commodity_down": {
+    "trigger_key": "commodity_down",
+    "vn_sectors_positive": [
+      "airlines",
+      "transport",
+      "plastics",
+      "consumers"
+    ],
+    "vn_sectors_negative": [
+      "oil_gas",
+      "fertilizer",
+      "steel",
+      "chemicals"
+    ],
+    "watch_stocks": {
+      "airlines": [
+        "HVN",
+        "VJC"
+      ],
+      "transport": [
+        "HAH",
+        "GMD",
+        "VSC"
+      ],
+      "plastics": [
+        "BMP",
+        "NTP"
+      ],
+      "consumers": [
+        "MWG",
+        "DGW",
+        "FRT"
+      ],
+      "oil_gas": [
+        "PVD",
+        "PVS",
+        "BSR"
+      ],
+      "fertilizer": [
+        "DPM",
+        "DCM",
+        "LAS",
+        "DDV"
+      ],
+      "steel": [
+        "HPG",
+        "HSG",
+        "NKG"
+      ],
+      "chemicals": [
+        "DGC",
+        "CSV"
+      ]
+    },
+    "confidence": "medium",
+    "decay_days": 5,
+    "notes": "Commodity weakness can ease input costs for users while softening narratives around producers."
+  },
+  "global_risk_on": {
+    "trigger_key": "global_risk_on",
+    "vn_sectors_positive": [
+      "securities",
+      "banking",
+      "real_estate",
+      "beta_growth"
+    ],
+    "vn_sectors_negative": [
+      "defensive"
+    ],
+    "watch_stocks": {
+      "securities": [
+        "SSI",
+        "VCI",
+        "HCM",
+        "VND"
+      ],
+      "banking": [
+        "MBB",
+        "TCB",
+        "VPB",
+        "ACB"
+      ],
+      "real_estate": [
+        "VHM",
+        "NLG",
+        "KDH",
+        "PDR"
+      ],
+      "beta_growth": [
+        "FPT",
+        "DGC",
+        "MWG"
+      ],
+      "defensive": [
+        "VNM",
+        "QNS",
+        "POW"
+      ]
+    },
+    "confidence": "medium",
+    "decay_days": 5,
+    "notes": "When global risk sentiment improves, high-beta sectors in VN often get stronger relative flows."
+  },
+  "global_risk_off": {
+    "trigger_key": "global_risk_off",
+    "vn_sectors_positive": [
+      "defensive",
+      "utilities",
+      "gold_jewelry"
+    ],
+    "vn_sectors_negative": [
+      "securities",
+      "real_estate",
+      "beta_growth"
+    ],
+    "watch_stocks": {
+      "defensive": [
+        "VNM",
+        "QNS",
+        "MCH"
+      ],
+      "utilities": [
+        "POW",
+        "REE",
+        "NT2"
+      ],
+      "gold_jewelry": [
+        "PNJ"
+      ],
+      "securities": [
+        "SSI",
+        "VCI",
+        "HCM",
+        "VND"
+      ],
+      "real_estate": [
+        "VHM",
+        "NLG",
+        "KDH",
+        "PDR"
+      ],
+      "beta_growth": [
+        "FPT",
+        "DGC",
+        "MWG"
+      ]
+    },
+    "confidence": "high",
+    "decay_days": 5,
+    "notes": "Risk-off usually hurts beta and liquidity-sensitive groups while supporting defensives and safe-haven proxies."
+  },
+  "vnd_depreciation": {
+    "trigger_key": "vnd_depreciation",
+    "vn_sectors_positive": [
+      "exporters",
+      "textiles",
+      "seafood",
+      "wood"
+    ],
+    "vn_sectors_negative": [
+      "airlines",
+      "import_sensitive",
+      "debt_heavy_usd"
+    ],
+    "watch_stocks": {
+      "exporters": [
+        "VHC",
+        "ANV",
+        "TCM",
+        "TNG",
+        "PTB"
+      ],
+      "textiles": [
+        "TCM",
+        "TNG",
+        "MSH"
+      ],
+      "seafood": [
+        "VHC",
+        "ANV",
+        "IDI"
+      ],
+      "wood": [
+        "PTB",
+        "GDT"
+      ],
+      "airlines": [
+        "HVN",
+        "VJC"
+      ],
+      "import_sensitive": [
+        "BMP",
+        "NTP",
+        "MWG"
+      ],
+      "debt_heavy_usd": [
+        "HVN",
+        "PC1"
+      ]
+    },
+    "confidence": "medium",
+    "decay_days": 10,
+    "notes": "Weaker VND can favor exporters but hurt USD-liability and imported-input names."
+  },
+  "china_property_crisis": {
+    "trigger_key": "china_property_crisis",
+    "vn_sectors_positive": [
+      "gold_jewelry",
+      "defensive"
+    ],
+    "vn_sectors_negative": [
+      "steel",
+      "materials",
+      "commodities"
+    ],
+    "watch_stocks": {
+      "gold_jewelry": [
+        "PNJ"
+      ],
+      "defensive": [
+        "VNM",
+        "QNS"
+      ],
+      "steel": [
+        "HPG",
+        "HSG",
+        "NKG"
+      ],
+      "materials": [
+        "HT1",
+        "BCC",
+        "KSB"
+      ],
+      "commodities": [
+        "DGC",
+        "CSV"
+      ]
+    },
+    "confidence": "medium",
+    "decay_days": 7,
+    "notes": "China property weakness can drag construction-related demand and spill into cyclical materials."
+  },
+  "gold_up": {
+    "trigger_key": "gold_up",
+    "vn_sectors_positive": [
+      "gold_jewelry",
+      "defensive"
+    ],
+    "vn_sectors_negative": [
+      "securities",
+      "beta_growth"
+    ],
+    "watch_stocks": {
+      "gold_jewelry": [
+        "PNJ"
+      ],
+      "defensive": [
+        "VNM",
+        "QNS",
+        "MCH"
+      ],
+      "securities": [
+        "SSI",
+        "VCI",
+        "HCM",
+        "VND"
+      ],
+      "beta_growth": [
+        "FPT",
+        "DGC",
+        "MWG"
+      ]
+    },
+    "confidence": "medium",
+    "decay_days": 5,
+    "notes": "Gold spikes often coincide with stress/risk-off and can be used as a sentiment signal more than a pure earnings signal."
+  },
+  "rate_cut_vn": {
+    "trigger_key": "rate_cut_vn",
+    "vn_sectors_positive": [
+      "real_estate",
+      "securities",
+      "banking",
+      "construction"
+    ],
+    "vn_sectors_negative": [
+      "insurance_deposit_sensitive"
+    ],
+    "watch_stocks": {
+      "real_estate": [
+        "VHM",
+        "NLG",
+        "KDH",
+        "PDR"
+      ],
+      "securities": [
+        "SSI",
+        "VCI",
+        "HCM",
+        "VND"
+      ],
+      "banking": [
+        "MBB",
+        "TCB",
+        "VPB",
+        "ACB"
+      ],
+      "construction": [
+        "CTD",
+        "HHV",
+        "VCG"
+      ],
+      "insurance_deposit_sensitive": [
+        "BVH"
+      ]
+    },
+    "confidence": "high",
+    "decay_days": 20,
+    "notes": "Domestic rate cuts usually help liquidity-sensitive sectors and valuation rerating themes."
+  },
+  "election_cycle": {
+    "trigger_key": "election_cycle",
+    "vn_sectors_positive": [
+      "defensive",
+      "utilities"
+    ],
+    "vn_sectors_negative": [
+      "securities",
+      "real_estate",
+      "high_beta"
+    ],
+    "watch_stocks": {
+      "defensive": [
+        "VNM",
+        "QNS",
+        "MCH"
+      ],
+      "utilities": [
+        "REE",
+        "POW",
+        "NT2"
+      ],
+      "securities": [
+        "SSI",
+        "VCI",
+        "HCM",
+        "VND"
+      ],
+      "real_estate": [
+        "VHM",
+        "NLG",
+        "KDH",
+        "PDR"
+      ],
+      "high_beta": [
+        "FPT",
+        "DGC",
+        "MWG"
+      ]
+    },
+    "confidence": "low",
+    "decay_days": 7,
+    "notes": "Election periods often create policy uncertainty and choppy sentiment. Treat as a caution overlay, not a standalone strong trigger."
+  },
+  "fdi_inflow": {
+    "trigger_key": "fdi_inflow",
+    "vn_sectors_positive": [
+      "industrial_parks",
+      "logistics",
+      "construction_materials"
+    ],
+    "vn_sectors_negative": [],
+    "watch_stocks": {
+      "industrial_parks": [
+        "KBC",
+        "SZC",
+        "IDC",
+        "BCM"
+      ],
+      "logistics": [
+        "GMD",
+        "VSC",
+        "HAH"
+      ],
+      "construction_materials": [
+        "HPG",
+        "KSB",
+        "CTD",
+        "VCG"
+      ]
+    },
+    "confidence": "medium",
+    "decay_days": 20,
+    "notes": "Sustained FDI inflows support industrial parks, warehousing, logistics, and related construction/materials names."
+  },
+  "export_demand_shift": {
+    "trigger_key": "export_demand_shift",
+    "vn_sectors_positive": [
+      "textiles",
+      "seafood",
+      "wood",
+      "logistics"
+    ],
+    "vn_sectors_negative": [],
+    "watch_stocks": {
+      "textiles": [
+        "TCM",
+        "TNG",
+        "MSH"
+      ],
+      "seafood": [
+        "VHC",
+        "ANV",
+        "IDI"
+      ],
+      "wood": [
+        "PTB",
+        "GDT"
+      ],
+      "logistics": [
+        "GMD",
+        "VSC",
+        "HAH"
+      ]
+    },
+    "confidence": "medium",
+    "decay_days": 15,
+    "notes": "Order shifts into Vietnam can improve export-oriented sectors with a medium-term lag."
+  }
+}

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from core.synthesis_gate import SynthesisGate
+from brain.synthesis_gate import SynthesisGate
 
 
 class WorkerContractValidator:

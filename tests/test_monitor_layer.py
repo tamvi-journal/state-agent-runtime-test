@@ -34,11 +34,11 @@ def test_monitor_flags_fake_progress() -> None:
     assert result.recommended_intervention == "do_not_mark_complete"
 
 
-def test_monitor_flags_archive_overreach() -> None:
-    monitor = MonitorLayer(archive_fragment_soft_limit=3)
+def test_monitor_flags_ambiguity() -> None:
+    monitor = MonitorLayer()
 
     result = monitor.evaluate(
-        context_view={"active_project": "state-memory-agent", "task_focus": "answer from current state"},
+        context_view={"active_project": "state-memory-agent", "task_focus": ""},
         live_state={"active_mode": "build"},
         delta_log={"policy_intrusion_detected": False, "repair_event": False},
         current_message="Continue the same thing.",
@@ -47,8 +47,8 @@ def test_monitor_flags_archive_overreach() -> None:
         archive_status={"archive_consulted": True, "fragments_used": 6},
     )
 
-    assert result.archive_overreach_risk > 0.30
-    assert result.recommended_intervention in {"reduce_archive_weight", "ask_clarify", "tighten_project_focus"}
+    assert result.ambiguity_risk >= 0.35
+    assert result.recommended_intervention == "ask_clarify"
 
 
 def test_monitor_flags_mode_decay_and_drift() -> None:
@@ -66,3 +66,24 @@ def test_monitor_flags_mode_decay_and_drift() -> None:
 
     assert result.drift_risk > 0.30
     assert result.mode_decay_risk > 0.30
+
+
+def test_monitor_output_tracks_only_the_thin_runtime_risks() -> None:
+    result = MonitorLayer().evaluate(
+        context_view={"active_project": "state-memory-agent", "task_focus": "worker contract"},
+        live_state={"active_mode": "build"},
+        delta_log={"policy_intrusion_detected": False, "repair_event": False},
+        current_message="Load MBB daily data",
+        draft_response="Preparing bounded response.",
+        action_status={"verification_status": "pending", "observed_outcome": ""},
+        archive_status={"archive_consulted": False, "fragments_used": 0},
+    ).to_dict()
+
+    assert set(result.keys()) == {
+        "drift_risk",
+        "ambiguity_risk",
+        "fake_progress_risk",
+        "mode_decay_risk",
+        "recommended_intervention",
+        "notes",
+    }

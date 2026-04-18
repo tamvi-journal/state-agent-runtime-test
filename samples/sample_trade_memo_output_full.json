@@ -1,0 +1,120 @@
+{
+  "workflow_name": "trade_memo_engine",
+  "run_id": "2026-03-29-memo-full-001",
+  "timestamp": "2026-03-29T02:05:00Z",
+  "status": "success",
+  "data": {
+    "memo_mode": "full",
+    "ticker_memos": [
+      {
+        "ticker": "PVD",
+        "sector": "oil_gas",
+        "setup_summary": {
+          "status": "active_setup",
+          "good_points": [
+            "sector_active",
+            "volume_confirmed",
+            "strong_close",
+            "above_ma20_and_ma50"
+          ],
+          "missing_points": [
+            "still_near_short_term_resistance"
+          ],
+          "main_risk": "breakout may fail if follow-through weakens under resistance"
+        },
+        "scenario_table": [
+          {
+            "scenario": "bullish",
+            "probability_pct": 55,
+            "target_zone": "31.0-32.5",
+            "timeline": "2-6 weeks",
+            "triggers": [
+              "hold above breakout zone",
+              "volume stays above average",
+              "sector remains ACTIVE or HOT"
+            ]
+          },
+          {
+            "scenario": "neutral",
+            "probability_pct": 25,
+            "target_zone": "28.3-30.0",
+            "timeline": "2-4 weeks",
+            "triggers": [
+              "price consolidates under resistance",
+              "volume cools down",
+              "market lacks fresh catalyst"
+            ]
+          },
+          {
+            "scenario": "bearish",
+            "probability_pct": 20,
+            "target_zone": "26.8-27.5",
+            "timeline": "1-3 weeks",
+            "triggers": [
+              "lose support zone",
+              "sector weakens",
+              "failed breakout"
+            ]
+          }
+        ],
+        "timeline_notes": [
+          "2-6 week swing window if oil/gas theme persists",
+          "Needs sector continuation more than standalone stock strength"
+        ],
+        "position_plan": {
+          "capital_reference": "500M VND",
+          "allocation_style": "staged_entry",
+          "levels": [
+            {
+              "label": "1st buy",
+              "price_zone": "28.3-28.7",
+              "capital_pct": 40,
+              "purpose": "core position"
+            },
+            {
+              "label": "2nd buy",
+              "price_zone": "27.6-28.0",
+              "capital_pct": 30,
+              "purpose": "add on retest"
+            },
+            {
+              "label": "3rd buy",
+              "price_zone": "29.2 breakout + hold",
+              "capital_pct": 20,
+              "purpose": "confirmation add"
+            }
+          ],
+          "cash_reserve_pct": 10
+        },
+        "tp_plan": {
+          "tp1": {
+            "zone": "30.5-31.0",
+            "action": "trim 20%"
+          },
+          "tp2": {
+            "zone": "31.8-32.2",
+            "action": "trim 30%"
+          },
+          "tp3": {
+            "zone": "32.5+",
+            "action": "review remaining position"
+          }
+        },
+        "risk_plan": {
+          "invalidation_zone": "below 27.0",
+          "risk_note": [
+            "near resistance",
+            "depends on sector continuation",
+            "bull case weakens fast if breakout fails"
+          ]
+        },
+        "what_would_increase_confidence": [
+          "clean break above resistance",
+          "sector upgrades from ACTIVE to HOT",
+          "follow-through candle with strong close"
+        ],
+        "plain_text": "FULL TRADE MEMO — PVD\\n\\n1. Setup Summary\\n- Sector: Oil & Gas (ACTIVE)\\n- Strong points: active sector, confirmed volume, strong close, above MA20/50\\n- Missing: still close to resistance\\n- Main risk: failed breakout under resistance\\n\\n2. Scenario Table\\n- Bullish (55%): 31.0-32.5 in 2-6 weeks if breakout holds and volume stays strong\\n- Neutral (25%): 28.3-30.0 in 2-4 weeks if price consolidates under resistance\\n- Bearish (20%): 26.8-27.5 in 1-3 weeks if support fails and sector weakens\\n\\n3. Position Plan\\n- 1st buy: 28.3-28.7 (40%)\\n- 2nd buy: 27.6-28.0 (30%)\\n- 3rd buy: 29.2 breakout + hold (20%)\\n- Keep 10% cash reserve\\n\\n4. TP Plan\\n- TP1: 30.5-31.0 trim 20%\\n- TP2: 31.8-32.2 trim 30%\\n- TP3: 32.5+ review remaining\\n\\n5. Risk\\n- Invalidation: below 27.0\\n- Confidence improves if breakout is clean and sector stays strong"
+      }
+    ]
+  }
+}

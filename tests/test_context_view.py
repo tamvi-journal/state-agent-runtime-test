@@ -1,90 +1,96 @@
 from __future__ import annotations
 
-from family.context_view import ContextViewBuilder
-from family.context_view_types import ContextViewInput
+from context.context_view import ContextViewBuilder
+from state.live_state import LiveState
+from verification.verification_record import VerificationRecord
 
 
-def _input(**overrides) -> ContextViewInput:
-    payload = {
-        "active_project": "family-scaffold",
-        "active_mode": "build",
-        "current_task": "add compact family canary",
-        "current_environment_state": "local repository ready",
-        "last_verified_result": "",
-        "open_obligations": ["keep canary narrow"],
-        "verification_status": "passed",
-        "disagreement_events": [],
-        "risk_hint": "",
-        "monitor_summary": None,
-        "recent_anchor_cue": "",
-    }
-    payload.update(overrides)
-    return ContextViewInput(**payload)
+def _state() -> LiveState:
+    return LiveState(
+        active_mode="build",
+        current_axis="technical",
+        coherence_level=0.9,
+        tension_flags=[],
+        active_project="thin-runtime-harness",
+        user_signal="pytest",
+        continuity_anchor="pytest-anchor",
+        archive_needed=False,
+    )
 
 
 def test_basic_compact_build() -> None:
     builder = ContextViewBuilder()
-    view = builder.build(_input())
+    view = builder.build_pre_action(
+        live_state=_state(),
+        task_focus="add compact runtime canary",
+        current_environment_state="local repository ready",
+        open_obligations=["keep canary narrow"],
+        current_risk="none",
+    )
 
-    assert view.active_project == "family-scaffold"
-    assert view.task_focus == "add compact family canary"
+    assert view["active_project"] == "thin-runtime-harness"
+    assert view["task_focus"] == "add compact runtime canary"
 
 
 def test_verified_result_is_surfaced() -> None:
     builder = ContextViewBuilder()
-    view = builder.build(
-        _input(
-            last_verified_result="router decision smoke passed",
-            verification_status="passed",
-        )
+    record = VerificationRecord(
+        intended_action="run worker",
+        executed_action="worker.run()",
+        expected_change="payload exists",
+        observed_outcome="payload exists",
+        verification_status="passed",
+    )
+    view = builder.build_post_action(
+        live_state=_state(),
+        task_focus="inspect verification",
+        current_environment_state="worker finished",
+        verification_record=record,
+        open_obligations=["synthesize"],
+        current_risk="none",
+        action_summary="worker returned evidence",
     )
 
-    assert view.last_verified_result == "router decision smoke passed"
-    assert view.verification_status == "passed"
+    assert view["last_verified_result"]["observed_outcome"] == "payload exists"
+    assert view["verification_status"] == "passed"
 
 
 def test_open_obligations_are_preserved() -> None:
     builder = ContextViewBuilder()
-    view = builder.build(
-        _input(open_obligations=["keep scope narrow", "do not add archive routing"])
+    view = builder.build_pre_action(
+        live_state=_state(),
+        task_focus="keep scope narrow",
+        current_environment_state="local repository ready",
+        open_obligations=["keep scope narrow", "do not add archive routing"],
+        current_risk="none",
     )
 
-    assert view.open_obligations == ["keep scope narrow", "do not add archive routing"]
-
-
-def test_open_disagreement_remains_visible() -> None:
-    builder = ContextViewBuilder()
-    view = builder.build(
-        _input(
-            disagreement_events=[
-                {
-                    "event_id": "dg_ctx",
-                    "disagreement_type": "action",
-                    "severity": 0.82,
-                    "still_open": True,
-                }
-            ]
-        )
-    )
-
-    assert view.shared_disagreement_status == "open:action:meaningful"
+    assert view["open_obligations"] == ["keep scope narrow", "do not add archive routing"]
 
 
 def test_output_stays_compact_and_not_transcript_like() -> None:
     builder = ContextViewBuilder()
-    exported = builder.export_view(builder.build(_input()))
+    exported = builder.build_pre_action(
+        live_state=_state(),
+        task_focus="stay compact",
+        current_environment_state="local repository ready",
+        open_obligations=["keep state compact"],
+        current_risk="none",
+    )
 
     assert set(exported.keys()) == {
+        "context_phase",
         "active_project",
         "active_mode",
+        "current_axis",
         "task_focus",
         "current_environment_state",
         "last_verified_result",
         "open_obligations",
         "current_risk",
-        "verification_status",
-        "shared_disagreement_status",
-        "notes",
+        "archive_needed",
+        "continuity_anchor",
+        "user_signal",
     }
     assert "transcript" not in exported
     assert "conversation_history" not in exported
@@ -92,13 +98,12 @@ def test_output_stays_compact_and_not_transcript_like() -> None:
 
 def test_no_archive_driving_behavior_is_introduced() -> None:
     builder = ContextViewBuilder()
-    exported = builder.export_view(
-        builder.build(
-            _input(
-                monitor_summary={"primary_risk": "archive_overreach"},
-                risk_hint="",
-            )
-        )
+    exported = builder.build_pre_action(
+        live_state=_state(),
+        task_focus="stay local",
+        current_environment_state="local repository ready",
+        open_obligations=[],
+        current_risk="none",
     )
 
     assert "archive_route" not in exported
@@ -107,7 +112,13 @@ def test_no_archive_driving_behavior_is_introduced() -> None:
 
 def test_no_sleep_logic_is_introduced() -> None:
     builder = ContextViewBuilder()
-    exported = builder.export_view(builder.build(_input()))
+    exported = builder.build_pre_action(
+        live_state=_state(),
+        task_focus="stay local",
+        current_environment_state="local repository ready",
+        open_obligations=[],
+        current_risk="none",
+    )
 
     assert "sleep_state" not in exported
     assert "wake_state" not in exported

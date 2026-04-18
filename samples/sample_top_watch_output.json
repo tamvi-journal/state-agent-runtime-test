@@ -1,0 +1,119 @@
+{
+  "workflow_name": "candle_volume_structure_engine",
+  "run_id": "2026-03-29-morning-001",
+  "timestamp": "2026-03-29T01:10:00Z",
+  "status": "success",
+  "data": {
+    "top_list": [
+      {
+        "ticker": "PVD",
+        "sector": "oil_gas",
+        "setup_type": "base_breakout",
+        "location_type": "near_base_top",
+        "candle_signal": "bullish_momentum",
+        "volume_signal": "expanded_confirmed",
+        "close_quality": "strong_close_near_high",
+        "base_quality": "tight_base",
+        "retest_quality": "not_required",
+        "scores": {
+          "trend_quality_score": 8.5,
+          "volume_confirmation_score": 8.0,
+          "setup_readiness_score": 8.7,
+          "final_score": 8.4
+        },
+        "why_in": [
+          "strong_close",
+          "volume_expansion",
+          "sector_active"
+        ],
+        "why_not_top": [],
+        "risk_note": [
+          "near_short_term_resistance"
+        ]
+      },
+      {
+        "ticker": "PVS",
+        "sector": "oil_gas",
+        "setup_type": "continuation_break",
+        "location_type": "above_ma20",
+        "candle_signal": "bullish_momentum",
+        "volume_signal": "expanded_confirmed",
+        "close_quality": "strong_close_near_high",
+        "base_quality": "acceptable",
+        "retest_quality": "pending",
+        "scores": {
+          "trend_quality_score": 8.0,
+          "volume_confirmation_score": 7.8,
+          "setup_readiness_score": 8.1,
+          "final_score": 8.0
+        },
+        "why_in": [
+          "sector_active",
+          "rs_supportive",
+          "volume_ok"
+        ],
+        "why_not_top": [],
+        "risk_note": [
+          "watch_follow_through_next_bar"
+        ]
+      }
+    ],
+    "watch_list": [
+      {
+        "ticker": "DPM",
+        "sector": "fertilizer",
+        "setup_type": "base_forming",
+        "location_type": "inside_base",
+        "candle_signal": "quiet_candle",
+        "volume_signal": "drying_up",
+        "close_quality": "neutral",
+        "base_quality": "acceptable",
+        "retest_quality": "pending",
+        "scores": {
+          "trend_quality_score": 7.2,
+          "volume_confirmation_score": 5.8,
+          "setup_readiness_score": 6.4,
+          "final_score": 6.5
+        },
+        "why_in": [
+          "base_ok",
+          "sector_watch"
+        ],
+        "why_not_top": [
+          "needs_volume_confirmation"
+        ],
+        "risk_note": [
+          "still_under_resistance"
+        ]
+      },
+      {
+        "ticker": "HPG",
+        "sector": "steel",
+        "setup_type": "early_recovery",
+        "location_type": "above_support",
+        "candle_signal": "reversal_bar",
+        "volume_signal": "moderate",
+        "close_quality": "acceptable",
+        "base_quality": "loose",
+        "retest_quality": "pending",
+        "scores": {
+          "trend_quality_score": 6.8,
+          "volume_confirmation_score": 6.0,
+          "setup_readiness_score": 6.2,
+          "final_score": 6.3
+        },
+        "why_in": [
+          "sector_watch",
+          "rs_improving"
+        ],
+        "why_not_top": [
+          "base_not_tight",
+          "needs_follow_through"
+        ],
+        "risk_note": [
+          "still_near_overhead_supply"
+        ]
+      }
+    ]
+  }
+}

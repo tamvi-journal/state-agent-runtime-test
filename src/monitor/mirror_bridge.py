@@ -11,24 +11,18 @@ _PHASE_PRIORITY = {
         "ambiguity_risk",
         "mode_decay_risk",
         "drift_risk",
-        "archive_overreach_risk",
-        "policy_pressure",
         "fake_progress_risk",
     ),
     "post_action": (
         "fake_progress_risk",
         "mode_decay_risk",
-        "archive_overreach_risk",
         "ambiguity_risk",
         "drift_risk",
-        "policy_pressure",
     ),
     "synthesis": (
         "mode_decay_risk",
         "drift_risk",
-        "policy_pressure",
         "ambiguity_risk",
-        "archive_overreach_risk",
         "fake_progress_risk",
     ),
 }
@@ -37,9 +31,7 @@ _PHASE_PRIORITY = {
 _RISK_TO_PRIMARY = {
     "drift_risk": "drift",
     "ambiguity_risk": "ambiguity",
-    "policy_pressure": "policy_pressure",
     "fake_progress_risk": "fake_progress",
-    "archive_overreach_risk": "archive_overreach",
     "mode_decay_risk": "mode_decay",
 }
 
@@ -164,10 +156,8 @@ class MirrorBridge:
             base = f"response may be drifting away from active mode={active_mode}"
         elif primary_risk == "drift":
             base = "response may be flattening away from project-specific shape"
-        elif primary_risk == "archive_overreach":
-            base = "retrieval may be outweighing live state"
         else:
-            base = "early abstraction or defensive smoothing may be present"
+            base = "no major monitor risk visible"
 
         suffix = (
             f" | phase={action_phase}"

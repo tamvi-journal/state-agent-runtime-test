@@ -28,32 +28,5 @@ class TraceEvents:
     def log_monitor_summary(self, *, monitor_summary: dict[str, Any]) -> None:
         self.logger.log("monitor_summary", monitor_summary)
 
-    def log_effort_decision(self, *, effort_decision: dict[str, Any]) -> None:
-        self.logger.log("effort_decision", effort_decision)
-
-    def log_tracey_turn(self, *, tracey_turn: dict[str, Any]) -> None:
-        self.logger.log("tracey_turn", tracey_turn)
-
-    def log_tracey_state_patch(self, *, state_patch: dict[str, Any]) -> None:
-        self.logger.log("tracey_state_patch", state_patch)
-
-    def log_seyn_turn(self, *, seyn_turn: dict[str, Any]) -> None:
-        self.logger.log("seyn_turn", seyn_turn)
-
-    def log_seyn_state_patch(self, *, state_patch: dict[str, Any]) -> None:
-        self.logger.log("seyn_state_patch", state_patch)
-
-    def log_disagreement_event(self, *, disagreement_result: dict[str, Any]) -> None:
-        self.logger.log("disagreement_event", disagreement_result)
-
-    def log_coordination_decision(self, *, routing: dict[str, Any]) -> None:
-        self.logger.log("coordination_decision", routing)
-
-    def log_cross_logic_exchange(self, *, tracey_exchange: dict[str, Any] | None, seyn_exchange: dict[str, Any] | None) -> None:
-        self.logger.log("cross_logic_exchange", {"tracey_exchange": tracey_exchange, "seyn_exchange": seyn_exchange})
-
-    def log_reconciliation_result(self, *, reconciliation: dict[str, Any] | None) -> None:
-        self.logger.log("reconciliation_result", {"reconciliation": reconciliation})
-
     def log_final_synthesis(self, *, user_text: str, final_response: str, worker_used: str | None) -> None:
         self.logger.log("final_synthesis", {"user_text": user_text, "worker_used": worker_used, "final_response": final_response})

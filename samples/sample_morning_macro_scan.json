@@ -1,0 +1,61 @@
+{
+  "workflow_name": "morning_macro_scan",
+  "run_id": "2026-03-29-morning-001",
+  "timestamp": "2026-03-29T00:30:00Z",
+  "status": "success",
+  "data": {
+    "scan_date": "2026-03-29",
+    "source_count": 18,
+    "headline_count": 42,
+    "global_signals": [
+      {
+        "signal_id": "oil_001",
+        "theme": "oil",
+        "headline": "Brent rises on Middle East tension",
+        "summary": "Oil extended gains after renewed geopolitical tension.",
+        "direction": "positive",
+        "strength_score": 8.4,
+        "confidence": "high",
+        "time_horizon": "short_term",
+        "tags": [
+          "oil",
+          "middle_east",
+          "risk"
+        ],
+        "source": "Reuters"
+      },
+      {
+        "signal_id": "usd_001",
+        "theme": "usd",
+        "headline": "Dollar firms after hawkish Fed comments",
+        "summary": "USD strengthened as markets repriced rate expectations.",
+        "direction": "positive",
+        "strength_score": 7.2,
+        "confidence": "medium",
+        "time_horizon": "short_term",
+        "tags": [
+          "usd",
+          "rates",
+          "fed"
+        ],
+        "source": "Reuters"
+      },
+      {
+        "signal_id": "china_001",
+        "theme": "china",
+        "headline": "China signals fresh stimulus for industrial demand",
+        "summary": "Policy support may help cyclical demand and logistics sentiment.",
+        "direction": "positive",
+        "strength_score": 7.6,
+        "confidence": "medium",
+        "time_horizon": "medium_term",
+        "tags": [
+          "china",
+          "stimulus",
+          "commodities"
+        ],
+        "source": "StructuredFeed"
+      }
+    ]
+  }
+}
