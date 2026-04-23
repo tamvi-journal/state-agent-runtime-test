@@ -28,6 +28,7 @@ class RequestRouter:
         verification_record: VerificationRecord | None = None,
         render_mode: str = "user",
         monitor_summary: dict[str, Any] | None = None,
+        tracey_turn: dict[str, Any] | None = None,
     ) -> str:
         return self.main_brain.handle_request(
             user_text,
@@ -35,4 +36,5 @@ class RequestRouter:
             verification_record=verification_record,
             render_mode=render_mode,
             monitor_summary=monitor_summary,
+            tracey_turn=tracey_turn,
         )

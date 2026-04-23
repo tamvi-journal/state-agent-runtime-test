@@ -8,6 +8,7 @@ def test_runtime_harness_runs_the_single_worker_spine() -> None:
 
     assert result["gate_decision"]["decision"] == "sandbox_only"
     assert result["verification_record"]["verification_status"] == "passed"
+    assert result["tracey_turn"]["state_patch"]["tracey_build_mode_active"] is True
     assert result["handoff_baton"]["task_focus"] == "verify bounded market-data lookup for MBB"
     assert "Main brain used market_data_worker for ticker MBB." in result["final_response"]
 
@@ -18,6 +19,8 @@ def test_runtime_harness_keeps_direct_response_out_of_fake_completion() -> None:
     assert result["verification_record"] is None
     assert result["handoff_baton"]["verification_status"] == "pending"
     assert result["gate_decision"]["decision"] == "deny"
+    assert result["tracey_turn"]["state_patch"]["tracey_response_constraint"] == "build_exact"
+    assert "Tracey" not in result["final_response"]
 
 
 def test_runtime_harness_routes_technical_analysis_request() -> None:

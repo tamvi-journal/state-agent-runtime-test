@@ -107,8 +107,10 @@ class MainBrain:
         *,
         render_mode: RenderMode = "user",
         monitor_summary: dict[str, Any] | None = None,
+        tracey_turn: dict[str, Any] | None = None,
     ) -> str:
         intervention = self._monitor_intervention(monitor_summary)
+        tracey_hints = self._tracey_hints(tracey_turn)
 
         if render_mode == "builder":
             base = (
@@ -120,18 +122,23 @@ class MainBrain:
             )
             if intervention != "none":
                 base += f" Monitor intervention in effect: {intervention}."
+            if tracey_hints.get("verification_before_completion"):
+                base += " Build posture remains active: verification should still precede completion."
             return base
 
-        if intervention == "ask_clarify":
+        if intervention == "ask_clarify" or tracey_hints.get("keep_ambiguity_open"):
             return (
                 "I can continue, but the current turn may still be ambiguous. "
                 "I should clarify the target before pretending the route is obvious."
             )
 
-        return (
+        base = (
             "I read the request, but this runtime currently supports only the bounded "
             "market-data, technical-analysis, macro-sector-mapping, sector-flow, candle-volume-structure, and trade-memo paths."
         )
+        if tracey_hints.get("recognition_active"):
+            base += " I am keeping the response aligned to the active runtime posture instead of inventing a broader route."
+        return base
 
     def synthesize_worker_result(
         self,
@@ -141,6 +148,7 @@ class MainBrain:
         verification_record: VerificationRecord | None = None,
         render_mode: RenderMode = "user",
         monitor_summary: dict[str, Any] | None = None,
+        tracey_turn: dict[str, Any] | None = None,
     ) -> str:
         normalized = self.synthesis_gate.normalize(worker_payload)
         result = normalized["result"]
@@ -166,11 +174,12 @@ class MainBrain:
             worker_name=worker_name,
             ticker=ticker,
             result=result,
-            warnings=warnings,
-            verification_record=verification_record,
-            intervention=intervention,
-            monitor_summary=monitor_summary,
-        )
+                warnings=warnings,
+                verification_record=verification_record,
+                intervention=intervention,
+                monitor_summary=monitor_summary,
+                tracey_turn=tracey_turn,
+            )
 
     def handle_request(
         self,
@@ -180,6 +189,7 @@ class MainBrain:
         verification_record: VerificationRecord | None = None,
         render_mode: RenderMode = "user",
         monitor_summary: dict[str, Any] | None = None,
+        tracey_turn: dict[str, Any] | None = None,
     ) -> str:
         interpreted = self.interpret_request(user_text)
 
@@ -188,6 +198,7 @@ class MainBrain:
                 user_text,
                 render_mode=render_mode,
                 monitor_summary=monitor_summary,
+                tracey_turn=tracey_turn,
             )
 
         if worker_payload is None:
@@ -216,6 +227,7 @@ class MainBrain:
             verification_record=verification_record,
             render_mode=render_mode,
             monitor_summary=monitor_summary,
+            tracey_turn=tracey_turn,
         )
 
     def _render_builder_mode(
@@ -476,7 +488,9 @@ class MainBrain:
         verification_record: VerificationRecord | None,
         intervention: str,
         monitor_summary: dict[str, Any] | None,
+        tracey_turn: dict[str, Any] | None = None,
     ) -> str:
+        tracey_hints = self._tracey_hints(tracey_turn)
         if worker_name == "technical_analysis_worker":
             return self._render_user_mode_technical_analysis(
                 ticker=ticker,
@@ -485,6 +499,7 @@ class MainBrain:
                 verification_record=verification_record,
                 intervention=intervention,
                 monitor_summary=monitor_summary,
+                tracey_turn=tracey_turn,
             )
         if worker_name == "macro_sector_mapping_worker":
             return self._render_user_mode_macro_sector_mapping(
@@ -493,6 +508,7 @@ class MainBrain:
                 verification_record=verification_record,
                 intervention=intervention,
                 monitor_summary=monitor_summary,
+                tracey_turn=tracey_turn,
             )
         if worker_name == "sector_flow_worker":
             return self._render_user_mode_sector_flow(
@@ -501,6 +517,7 @@ class MainBrain:
                 verification_record=verification_record,
                 intervention=intervention,
                 monitor_summary=monitor_summary,
+                tracey_turn=tracey_turn,
             )
         if worker_name == "candle_volume_structure_worker":
             return self._render_user_mode_candle_volume_structure(
@@ -509,6 +526,7 @@ class MainBrain:
                 verification_record=verification_record,
                 intervention=intervention,
                 monitor_summary=monitor_summary,
+                tracey_turn=tracey_turn,
             )
         if worker_name == "trade_memo_worker":
             return self._render_user_mode_trade_memo(
@@ -517,6 +535,7 @@ class MainBrain:
                 verification_record=verification_record,
                 intervention=intervention,
                 monitor_summary=monitor_summary,
+                tracey_turn=tracey_turn,
             )
 
         lines: list[str] = []
@@ -570,6 +589,8 @@ class MainBrain:
             lines.append("Warnings:")
             lines.extend(f"- {warning}" for warning in warnings)
 
+        if tracey_hints.get("verification_before_completion"):
+            lines.append("Completion posture: stay inside verified bounded evidence.")
         lines.append("This is a bounded market-data read, not a trading judgment.")
         return "\n".join(lines)
 
@@ -582,8 +603,10 @@ class MainBrain:
         verification_record: VerificationRecord | None,
         intervention: str,
         monitor_summary: dict[str, Any] | None,
+        tracey_turn: dict[str, Any] | None = None,
     ) -> str:
         lines: list[str] = []
+        tracey_hints = self._tracey_hints(tracey_turn)
         indicator_read = result.get("indicator_read", {})
 
         lines.append(f"I ran a bounded technical-analysis read for {ticker}.")
@@ -627,6 +650,8 @@ class MainBrain:
             lines.append("Warnings:")
             lines.extend(f"- {warning}" for warning in warnings)
 
+        if tracey_hints.get("verification_before_completion"):
+            lines.append("Completion posture: keep the read bounded to verified evidence.")
         lines.append("This is a bounded technical analysis read from local market data, not a trading judgment.")
         return "\n".join(lines)
 
@@ -638,8 +663,10 @@ class MainBrain:
         verification_record: VerificationRecord | None,
         intervention: str,
         monitor_summary: dict[str, Any] | None,
+        tracey_turn: dict[str, Any] | None = None,
     ) -> str:
         lines: list[str] = []
+        tracey_hints = self._tracey_hints(tracey_turn)
         matched_signals = result.get("matched_signals", [])
         vn_sector_bias = result.get("vn_sector_bias", [])
         conflict_flags = result.get("conflict_flags", [])
@@ -686,6 +713,8 @@ class MainBrain:
             lines.append("Warnings:")
             lines.extend(f"- {warning}" for warning in warnings)
 
+        if tracey_hints.get("verification_before_completion"):
+            lines.append("Completion posture: keep the mapping bounded to verified evidence.")
         lines.append("This is bounded macro-sector mapping evidence from structured input and canonical config, not a final market report.")
         return "\n".join(lines)
 
@@ -697,8 +726,10 @@ class MainBrain:
         verification_record: VerificationRecord | None,
         intervention: str,
         monitor_summary: dict[str, Any] | None,
+        tracey_turn: dict[str, Any] | None = None,
     ) -> str:
         lines: list[str] = []
+        tracey_hints = self._tracey_hints(tracey_turn)
         sector_flow_board = result.get("sector_flow_board", [])
         conflict_flags = result.get("conflict_flags", [])
 
@@ -741,6 +772,8 @@ class MainBrain:
             lines.append("Warnings:")
             lines.extend(f"- {warning}" for warning in warnings)
 
+        if tracey_hints.get("verification_before_completion"):
+            lines.append("Completion posture: keep the board bounded to verified evidence.")
         lines.append("This is bounded sector-flow evidence from explicit metrics and canonical config, not a final market report.")
         return "\n".join(lines)
 
@@ -752,8 +785,10 @@ class MainBrain:
         verification_record: VerificationRecord | None,
         intervention: str,
         monitor_summary: dict[str, Any] | None,
+        tracey_turn: dict[str, Any] | None = None,
     ) -> str:
         lines: list[str] = []
+        tracey_hints = self._tracey_hints(tracey_turn)
         top_list = result.get("top_list", [])
         watch_list = result.get("watch_list", [])
         rejected = result.get("rejected", [])
@@ -801,6 +836,8 @@ class MainBrain:
             lines.append("Warnings:")
             lines.extend(f"- {warning}" for warning in warnings)
 
+        if tracey_hints.get("verification_before_completion"):
+            lines.append("Completion posture: keep the setup evidence bounded to verified evidence.")
         lines.append("This is bounded setup evidence from explicit candidates and canonical hard filters, not a final market report.")
         return "\n".join(lines)
 
@@ -812,8 +849,10 @@ class MainBrain:
         verification_record: VerificationRecord | None,
         intervention: str,
         monitor_summary: dict[str, Any] | None,
+        tracey_turn: dict[str, Any] | None = None,
     ) -> str:
         lines: list[str] = []
+        tracey_hints = self._tracey_hints(tracey_turn)
         ticker_memos = result.get("ticker_memos", [])
 
         lines.append("I ran a bounded trade-memo scenario read.")
@@ -851,6 +890,8 @@ class MainBrain:
             lines.append("Warnings:")
             lines.extend(f"- {warning}" for warning in warnings)
 
+        if tracey_hints.get("verification_before_completion"):
+            lines.append("Completion posture: keep the memo bounded to verified evidence.")
         lines.append("This is bounded trade-memo evidence with conditional scenarios, not a final market report.")
         return "\n".join(lines)
 
@@ -895,3 +936,12 @@ class MainBrain:
         if not monitor_summary:
             return "none"
         return str(monitor_summary.get("recommended_intervention", "none"))
+
+    @staticmethod
+    def _tracey_hints(tracey_turn: dict[str, Any] | None) -> dict[str, Any]:
+        if not tracey_turn:
+            return {}
+        response_hints = tracey_turn.get("response_hints", {})
+        if not isinstance(response_hints, dict):
+            return {}
+        return response_hints
