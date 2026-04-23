@@ -12,6 +12,8 @@ from monitor.monitor_layer import MonitorLayer
 from observability.logger import EventLogger
 from observability.trace_events import TraceEvents
 from runtime.request_router import RequestRouter
+from sleep.integration import apply_wake_result_to_runtime_state, rebuild_baton_after_wake
+from sleep.sleep_mode import wake_restore
 from state.delta_log import DeltaRecord
 from state.live_state import LiveState
 from state.state_manager import StateManager
@@ -54,15 +56,18 @@ class RuntimeHarness:
         host_metadata: dict[str, Any] | None = None,
         kernel_options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        normalized_rehydration = dict(rehydration_pack or {})
+        normalized_host_metadata = dict(host_metadata or {})
+        normalized_kernel_options = dict(kernel_options or {})
         effective_render_mode = self._resolve_render_mode(
             render_mode=render_mode,
-            kernel_options=kernel_options,
+            kernel_options=normalized_kernel_options,
         )
         state_manager = self._build_state_manager(
             baton=baton,
             user_text=user_text,
-            rehydration_pack=rehydration_pack,
-            kernel_options=kernel_options,
+            rehydration_pack=normalized_rehydration,
+            kernel_options=normalized_kernel_options,
         )
         main_brain = MainBrain(state_manager=state_manager)
         router = RequestRouter(main_brain=main_brain)
@@ -91,6 +96,18 @@ class RuntimeHarness:
         )
         handoff_builder = HandoffBuilder()
 
+        wake_result = self._maybe_restore_wake_result(
+            baton=baton,
+            rehydration_pack=normalized_rehydration,
+            host_metadata=normalized_host_metadata,
+            kernel_options=normalized_kernel_options,
+        )
+        live_state_dict = state_manager.get_state().to_dict()
+        sleep_runtime_state = apply_wake_result_to_runtime_state(
+            runtime_state=live_state_dict,
+            wake_result=wake_result,
+        ) if wake_result else live_state_dict
+
         interpreted = main_brain.interpret_request(user_text)
         task_focus = self._task_focus(interpreted=interpreted, user_text=user_text)
 
@@ -107,7 +124,7 @@ class RuntimeHarness:
 
         pre_monitor = monitor.evaluate(
             context_view=context_view,
-            live_state=state_manager.get_state().to_dict(),
+            live_state=sleep_runtime_state,
             delta_log=state_manager.get_recent_deltas()[-1].to_dict(),
             current_message=user_text,
             draft_response="Preparing bounded response.",
@@ -122,7 +139,7 @@ class RuntimeHarness:
         )["monitor_summary"]
         tracey_turn = tracey.inspect_turn(
             user_text=user_text,
-            live_state=state_manager.get_state().to_dict(),
+            live_state=sleep_runtime_state,
             monitor_summary=pre_monitor_summary,
         )
 
@@ -181,6 +198,10 @@ class RuntimeHarness:
                 monitor_summary=pre_monitor_summary,
                 tracey_turn=tracey_turn,
             )
+            final_response = self._apply_wake_posture(
+                final_response=final_response,
+                wake_result=wake_result,
+            )
             verification_status = "pending"
             observed_outcome = ""
             baton_obj = handoff_builder.build(
@@ -194,6 +215,12 @@ class RuntimeHarness:
                     verification_status=verification_status,
                 ),
             )
+            baton_payload = baton_obj.to_dict()
+            if wake_result:
+                baton_payload = rebuild_baton_after_wake(
+                    post_turn_result={"handoff_baton": baton_payload},
+                    wake_result=wake_result,
+                )
 
             return {
                 "final_response": final_response,
@@ -203,9 +230,11 @@ class RuntimeHarness:
                 "verification_record": None if verification_record is None else verification_record.to_dict(),
                 "monitor_summary": pre_monitor_summary,
                 "tracey_turn": tracey_turn,
-                "host_metadata": dict(host_metadata or {}),
-                "kernel_options": dict(kernel_options or {}),
-                "handoff_baton": baton_obj.to_dict(),
+                "wake_result": wake_result,
+                "sleep_runtime_state": sleep_runtime_state,
+                "host_metadata": normalized_host_metadata,
+                "kernel_options": normalized_kernel_options,
+                "handoff_baton": baton_payload,
                 "observed_outcome": observed_outcome,
                 "events": logger.all_events(),
             }
@@ -220,7 +249,7 @@ class RuntimeHarness:
         else:
             post_monitor = monitor.evaluate(
                 context_view=context_view,
-                live_state=state_manager.get_state().to_dict(),
+                live_state=sleep_runtime_state,
                 delta_log=state_manager.get_recent_deltas()[-1].to_dict(),
                 current_message=user_text,
                 draft_response="Worker evidence returned; do not mark complete before synthesis.",
@@ -241,6 +270,10 @@ class RuntimeHarness:
                 monitor_summary=monitor_summary,
                 tracey_turn=tracey_turn,
             )
+            final_response = self._apply_wake_posture(
+                final_response=final_response,
+                wake_result=wake_result,
+            )
             verification_status = verification_record.verification_status
             observed_outcome = verification_record.observed_outcome
             pre_monitor_summary = monitor_summary
@@ -256,6 +289,12 @@ class RuntimeHarness:
                 verification_status=verification_status,
             ),
         )
+        baton_payload = baton_obj.to_dict()
+        if wake_result:
+            baton_payload = rebuild_baton_after_wake(
+                post_turn_result={"handoff_baton": baton_payload},
+                wake_result=wake_result,
+            )
 
         return {
             "final_response": final_response,
@@ -265,12 +304,70 @@ class RuntimeHarness:
             "verification_record": None if verification_record is None else verification_record.to_dict(),
             "monitor_summary": pre_monitor_summary,
             "tracey_turn": tracey_turn,
-            "host_metadata": dict(host_metadata or {}),
-            "kernel_options": dict(kernel_options or {}),
-            "handoff_baton": baton_obj.to_dict(),
+            "wake_result": wake_result,
+            "sleep_runtime_state": sleep_runtime_state,
+            "host_metadata": normalized_host_metadata,
+            "kernel_options": normalized_kernel_options,
+            "handoff_baton": baton_payload,
             "observed_outcome": observed_outcome,
             "events": logger.all_events(),
         }
+
+    @staticmethod
+    def _maybe_restore_wake_result(
+        *,
+        baton: dict[str, Any] | None,
+        rehydration_pack: dict[str, Any],
+        host_metadata: dict[str, Any],
+        kernel_options: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        resume_requested = bool(
+            kernel_options.get("resume_from_sleep")
+            or rehydration_pack.get("wake_from_sleep")
+        )
+        if not resume_requested:
+            return None
+
+        session_id = str(
+            rehydration_pack.get("session_id")
+            or rehydration_pack.get("session_title")
+            or (baton or {}).get("session_id", "")
+        ).strip()
+        if not session_id:
+            return None
+
+        snapshot_dir = str(kernel_options.get("sleep_snapshot_dir", "runtime_state/sleep_snapshots"))
+        restored = wake_restore(
+            session_id=session_id,
+            snapshot_dir=snapshot_dir,
+            host_metadata={
+                "host_runtime": str(host_metadata.get("host_runtime", "OpenClaw")),
+                "route": str(host_metadata.get("route", "")),
+            },
+            session_metadata=rehydration_pack,
+            runtime_facts={
+                "host_runtime": str(host_metadata.get("host_runtime", "OpenClaw")),
+                "route_class": str(host_metadata.get("route", "")),
+            },
+        )
+        return restored.get("wake_result")
+
+    @staticmethod
+    def _apply_wake_posture(*, final_response: str, wake_result: dict[str, Any] | None) -> str:
+        if not wake_result:
+            return final_response
+        resume_class = str(wake_result.get("resume_class", "none"))
+        summary = str(wake_result.get("summary", "")).strip()
+        if resume_class == "full_resume" or not summary:
+            return final_response
+        prefix = {
+            "degraded_resume": f"Wake status: degraded resume. {summary}",
+            "clarify_first": f"Wake status: clarify first. {summary}",
+            "blocked": f"Wake status: blocked. {summary}",
+        }.get(resume_class)
+        if not prefix:
+            return final_response
+        return f"{prefix}\n\n{final_response}"
 
     @staticmethod
     def _task_focus(*, interpreted: dict[str, Any], user_text: str) -> str:
