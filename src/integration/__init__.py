@@ -7,12 +7,14 @@ from .payload_contracts import (
     validate_request_payload,
     validate_success_response,
 )
+from .session_roundtrip_store import SessionRoundtripStore
 
 __all__ = [
     "CONTRACT_SCHEMA_VERSION",
     "ContractValidationError",
     "OpenClawWrapper",
     "PayloadAdapter",
+    "SessionRoundtripStore",
     "validate_error_response",
     "validate_request_payload",
     "validate_success_response",

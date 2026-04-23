@@ -1,0 +1,41 @@
+{
+  "session_id": "finance/mbb:daily",
+  "session": {
+    "session_id": "finance/mbb:daily",
+    "session_kind": "",
+    "primary_focus": "MBB daily technical analysis",
+    "current_status": "failed",
+    "open_loops": [
+      "verification remains open"
+    ],
+    "last_verified_outcomes": [],
+    "recent_decisions": [
+      "inspect bounded evidence"
+    ],
+    "relevant_entities": [
+      "MBB"
+    ],
+    "active_skills": [
+      "technical_analysis"
+    ],
+    "risk_notes": [],
+    "next_hint": "inspect bounded evidence"
+  },
+  "baton": {
+    "task_focus": "verify bounded market-data lookup for MBB",
+    "active_mode": "build",
+    "open_loops": [
+      "verification remains open"
+    ],
+    "verification_status": "failed",
+    "next_hint": "inspect bounded evidence"
+  },
+  "snapshot_candidates": [
+    {
+      "candidate_type": "handoff_baton",
+      "task_focus": "verify bounded market-data lookup for MBB",
+      "verification_status": "failed",
+      "next_hint": "inspect bounded evidence"
+    }
+  ]
+}
