@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from runtime.runtime_harness import RuntimeHarness
+from state_memory.contracts import StateMemoryRecord
 from state_memory.store import StateMemoryStore
 
 
@@ -318,3 +319,46 @@ def test_runtime_harness_records_wake_degraded_event_when_enabled(tmp_path: Path
     records = StateMemoryStore(memory_path).read_all()
     event_types = {record["event_type"] for record in records}
     assert "wake_degraded" in event_types
+
+
+def test_runtime_harness_invalid_reactivation_limit_falls_back_without_crashing(tmp_path: Path) -> None:
+    memory_path = tmp_path / "state_memory.jsonl"
+    store = StateMemoryStore(memory_path)
+    assert store.append(
+        StateMemoryRecord(
+            event_type="wake_degraded",
+            scope="runtime/wake",
+            session_id="sess-limit",
+            summary="wake degraded because handles need revalidation",
+            source="wake_sanity",
+            tags=["wake", "degraded"],
+        )
+    )
+
+    baseline = RuntimeHarness().run(
+        user_text="wake revalidation",
+        render_mode="builder",
+        rehydration_pack={"session_id": "sess-limit"},
+    )
+
+    for invalid_limit in ("five", {}, None, 0, -2):
+        result = RuntimeHarness().run(
+            user_text="wake revalidation",
+            render_mode="builder",
+            rehydration_pack={"session_id": "sess-limit"},
+            kernel_options={
+                "enable_state_memory": True,
+                "state_memory_path": str(memory_path),
+                "state_memory_reactivation_limit": invalid_limit,
+            },
+        )
+
+        assert result["final_response"] == baseline["final_response"]
+        assert result["gate_decision"] == baseline["gate_decision"]
+        assert result["verification_record"] == baseline["verification_record"]
+        assert result["wake_result"] == baseline["wake_result"]
+        assert result["tracey_turn"] == baseline["tracey_turn"]
+        assert result["monitor_summary"] == baseline["monitor_summary"]
+        assert result["handoff_baton"] == baseline["handoff_baton"]
+        assert result["state_memory_reactivated"]
+        assert len(result["state_memory_reactivated"]) == 1
