@@ -109,8 +109,7 @@ def test_runtime_harness_trade_memo_demo_uses_explicit_sample_route() -> None:
     assert "Main brain used trade_memo_worker." in result["final_response"]
 
 
-def test_runtime_harness_applies_wake_resume_constraints(tmp_path: Path) -> None:
-    snapshot_dir = tmp_path / "sleep_snapshots"
+def _write_degraded_wake_snapshot(snapshot_dir: Path) -> None:
     snapshot_dir.mkdir(parents=True, exist_ok=True)
     snapshot_payload = {
         "schema_version": "state-agent-sleep-snapshot/v0.1",
@@ -171,6 +170,11 @@ def test_runtime_harness_applies_wake_resume_constraints(tmp_path: Path) -> None
     }
     snapshot_path = snapshot_dir / "builder_state_agent_runtime_test__latest.json"
     snapshot_path.write_text(json.dumps(snapshot_payload, indent=2), encoding="utf-8")
+
+
+def test_runtime_harness_applies_wake_resume_constraints(tmp_path: Path) -> None:
+    snapshot_dir = tmp_path / "sleep_snapshots"
+    _write_degraded_wake_snapshot(snapshot_dir)
 
     result = RuntimeHarness().run(
         user_text="continue the sleep wake work",
@@ -278,116 +282,6 @@ def test_runtime_harness_does_not_reactivate_invalidated_records(tmp_path: Path)
         user_text="wake handles",
         render_mode="user",
         kernel_options={
-def test_runtime_harness_does_not_write_state_memory_by_default(tmp_path: Path) -> None:
-    memory_path = tmp_path / "state_memory.jsonl"
-
-    result = RuntimeHarness().run(
-        user_text="hello there",
-        kernel_options={"state_memory_path": str(memory_path)},
-    )
-
-    assert result["state_memory_records_written"] == 0
-    assert result["state_memory_path"] == str(memory_path)
-    assert memory_path.exists() is False
-
-
-def test_runtime_harness_writes_state_memory_when_enabled(tmp_path: Path) -> None:
-    memory_path = tmp_path / "state_memory.jsonl"
-
-    result = RuntimeHarness().run(
-        user_text="Load MBB daily data",
-        kernel_options={
-            "enable_state_memory": True,
-            "state_memory_path": str(memory_path),
-        },
-    )
-
-    assert result["state_memory_records_written"] >= 1
-    assert result["state_memory_path"] == str(memory_path)
-    assert memory_path.exists() is True
-    assert StateMemoryStore(memory_path).read_all()
-
-
-def test_runtime_harness_records_wake_degraded_event_when_enabled(tmp_path: Path) -> None:
-    snapshot_dir = tmp_path / "sleep_snapshots"
-    snapshot_dir.mkdir(parents=True, exist_ok=True)
-    snapshot_payload = {
-        "schema_version": "state-agent-sleep-snapshot/v0.1",
-        "snapshot_id": "snap_test_001",
-        "created_at": "2026-04-23T19:10:00Z",
-        "runtime_id": "tracey_runtime_local",
-        "session_id": "builder_state_agent_runtime_test",
-        "sleep_reason": "manual",
-        "sleep_level": "normal",
-        "identity_state": {
-            "agent_name": "Tracey",
-            "active_axis": "build",
-            "mode": "build",
-            "identity_constraints": ["brain_speaks_last"],
-            "continuity_confidence": "medium",
-        },
-        "thread_state": {
-            "primary_focus": "state-agent-runtime-test sleep/wake work",
-            "current_status": "paused",
-            "open_loops": ["revalidate tool handles after wake"],
-            "recent_decisions": [],
-            "last_verified_outcomes": [],
-            "relevant_entities": ["Tracey"],
-            "next_hint": "continue sleep/wake integration",
-        },
-        "memory_state": {
-            "canonical_anchor_ids": ["tracey.invariant.brain_speaks_last"],
-            "provisional_anchor_ids": [],
-            "invalidated_anchor_ids": [],
-            "reactivation_priority": [],
-            "stale_anchor_risks": [],
-        },
-        "runtime_state": {
-            "verification_status": "passed",
-            "monitor_risk_summary": "",
-            "active_skills": ["workflow_builder"],
-            "pending_repairs": [],
-            "context_fragmentation": "low",
-        },
-        "handle_state": {
-            "tool_handles": [],
-            "worker_handles": [],
-            "dead_on_wake": [],
-            "must_revalidate": ["tool_handles"],
-        },
-        "boundary_state": {
-            "host_runtime": "OpenClaw",
-            "route_class": "direct_reasoning",
-            "persistence_scope": "mixed",
-            "truth_boundary_note": "sleep snapshot is local resume evidence only",
-        },
-        "resume_constraints": {
-            "must_run_wake_sanity": True,
-            "allow_direct_resume": False,
-            "requires_revalidation": ["tool_handles"],
-            "forbidden_claims_until_revalidated": [],
-        },
-    }
-    snapshot_path = snapshot_dir / "builder_state_agent_runtime_test__latest.json"
-    snapshot_path.write_text(json.dumps(snapshot_payload, indent=2), encoding="utf-8")
-    memory_path = tmp_path / "state_memory.jsonl"
-
-    result = RuntimeHarness().run(
-        user_text="continue the sleep wake work",
-        render_mode="builder",
-        rehydration_pack={
-            "session_id": "builder_state_agent_runtime_test",
-            "primary_focus": "state-agent-runtime-test sleep/wake work",
-            "current_status": "paused",
-        },
-        host_metadata={
-            "host_runtime": "OpenClaw",
-            "route": "direct_reasoning",
-        },
-        kernel_options={
-            "mode": "build",
-            "resume_from_sleep": True,
-            "sleep_snapshot_dir": str(snapshot_dir),
             "enable_state_memory": True,
             "state_memory_path": str(memory_path),
         },
@@ -423,6 +317,64 @@ def test_reactivated_state_memory_is_advisory_only(tmp_path: Path) -> None:
     assert with_memory["gate_decision"] == baseline["gate_decision"]
     assert with_memory["verification_record"] == baseline["verification_record"]
     assert with_memory["wake_result"] == baseline["wake_result"]
+
+
+def test_runtime_harness_does_not_write_state_memory_by_default(tmp_path: Path) -> None:
+    memory_path = tmp_path / "state_memory.jsonl"
+
+    result = RuntimeHarness().run(
+        user_text="hello there",
+        kernel_options={"state_memory_path": str(memory_path)},
+    )
+
+    assert result["state_memory_records_written"] == 0
+    assert result["state_memory_path"] == str(memory_path)
+    assert memory_path.exists() is False
+
+
+def test_runtime_harness_writes_state_memory_when_enabled(tmp_path: Path) -> None:
+    memory_path = tmp_path / "state_memory.jsonl"
+
+    result = RuntimeHarness().run(
+        user_text="Load MBB daily data",
+        kernel_options={
+            "enable_state_memory": True,
+            "state_memory_path": str(memory_path),
+        },
+    )
+
+    assert result["state_memory_records_written"] >= 1
+    assert result["state_memory_path"] == str(memory_path)
+    assert memory_path.exists() is True
+    assert StateMemoryStore(memory_path).read_all()
+
+
+def test_runtime_harness_records_wake_degraded_event_when_enabled(tmp_path: Path) -> None:
+    snapshot_dir = tmp_path / "sleep_snapshots"
+    _write_degraded_wake_snapshot(snapshot_dir)
+    memory_path = tmp_path / "state_memory.jsonl"
+
+    result = RuntimeHarness().run(
+        user_text="continue the sleep wake work",
+        render_mode="builder",
+        rehydration_pack={
+            "session_id": "builder_state_agent_runtime_test",
+            "primary_focus": "state-agent-runtime-test sleep/wake work",
+            "current_status": "paused",
+        },
+        host_metadata={
+            "host_runtime": "OpenClaw",
+            "route": "direct_reasoning",
+        },
+        kernel_options={
+            "mode": "build",
+            "resume_from_sleep": True,
+            "sleep_snapshot_dir": str(snapshot_dir),
+            "enable_state_memory": True,
+            "state_memory_path": str(memory_path),
+        },
+    )
+
     assert result["state_memory_records_written"] >= 1
     records = StateMemoryStore(memory_path).read_all()
     event_types = {record["event_type"] for record in records}
@@ -449,7 +401,7 @@ def test_runtime_harness_invalid_reactivation_limit_falls_back_without_crashing(
         rehydration_pack={"session_id": "sess-limit"},
     )
 
-    for invalid_limit in ("five", {}, None, 0, -2):
+    for invalid_limit in ("five", {}, None, 0, -2, True, False):
         result = RuntimeHarness().run(
             user_text="wake revalidation",
             render_mode="builder",
@@ -468,5 +420,5 @@ def test_runtime_harness_invalid_reactivation_limit_falls_back_without_crashing(
         assert result["tracey_turn"] == baseline["tracey_turn"]
         assert result["monitor_summary"] == baseline["monitor_summary"]
         assert result["handoff_baton"] == baseline["handoff_baton"]
-        assert result["state_memory_reactivated"]
-        assert len(result["state_memory_reactivated"]) == 1
+        assert result["reactivated_state_memories"]
+        assert len(result["reactivated_state_memories"]) == 1
