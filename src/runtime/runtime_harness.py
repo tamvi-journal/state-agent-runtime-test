@@ -379,7 +379,10 @@ class RuntimeHarness:
             rehydration_pack=rehydration_pack,
         )
         scope_prefix = str(kernel_options.get("state_memory_scope_prefix", "")).strip()
-        limit = int(kernel_options.get("state_memory_reactivation_limit", 5) or 5)
+        limit = RuntimeHarness._parse_positive_int_or_default(
+            kernel_options.get("state_memory_reactivation_limit", 5),
+            default=5,
+        )
         memory_path = kernel_options.get("state_memory_path")
         store = StateMemoryStore(memory_path=memory_path)
         recent_records = store.read_recent(limit=max(limit, 5) * 4)
@@ -470,6 +473,18 @@ class RuntimeHarness:
         if interpreted["task_type"] == "trade_memo":
             return "decide whether the memo evidence is strong enough for external rendering"
         return "clarify the next bounded task if execution is required"
+    
+    @staticmethod
+    def _parse_positive_int_or_default(raw_value: Any, *, default: int) -> int:
+        if isinstance(raw_value, bool):
+            return default
+        try:
+            parsed = int(raw_value)
+        except (TypeError, ValueError):
+            return default
+        if parsed <= 0:
+            return default
+        return parsed
 
     @staticmethod
     def _build_state_manager(
