@@ -60,6 +60,10 @@ class PayloadAdapter:
             "return_debug_trace": bool(kernel_options.get("return_debug_trace", False)),
             "include_worker_result": bool(kernel_options.get("include_worker_result", True)),
             "include_snapshot_candidates": bool(kernel_options.get("include_snapshot_candidates", True)),
+            "enable_state_memory": bool(kernel_options.get("enable_state_memory", False)),
+            "state_memory_path": str(kernel_options.get("state_memory_path", "")),
+            "state_memory_scope_prefix": str(kernel_options.get("state_memory_scope_prefix", "")),
+            "state_memory_reactivation_limit": kernel_options.get("state_memory_reactivation_limit", 5),
         }
 
     @staticmethod
