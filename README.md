@@ -444,6 +444,7 @@ Rule:
 - `docs/migration_notes.md`
 - `docs/TRACEY_AGENT_RUNTIME_CONTRACT.md`
 - `docs/TRACEY_TELEGRAM_BEHAVIOR_GUIDELINES.md`
+- `docs/RUNTIME_SCORECARD_TEMPLATE.md`
 
 ---
 
